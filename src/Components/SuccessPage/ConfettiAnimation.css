@@ -1,0 +1,205 @@
+:root {
+    --confetti-z-index: 9999;
+}
+
+/* Primary Confetti Fall Animation */
+@keyframes confetti-fall-primary {
+    0% {
+        opacity: 1;
+        transform: 
+            translateY(-10px) 
+            rotate(0deg) 
+            scale(1)
+            perspective(500px)
+            rotateX(0deg)
+            rotateY(0deg);
+    }
+    50% {
+        opacity: 0.9;
+        transform: 
+            translateY(50vh) 
+            rotate(var(--rotation)) 
+            scale(0.9)
+            perspective(500px)
+            rotateX(180deg)
+            rotateY(45deg);
+    }
+    100% {
+        opacity: 0;
+        transform: 
+            translateY(100vh) 
+            rotate(calc(var(--rotation) * 2)) 
+            scale(0.5)
+            perspective(500px)
+            rotateX(360deg)
+            rotateY(90deg);
+    }
+}
+
+/* Enhanced Tornado Confetti Animation */
+@keyframes confetti-tornado {
+    0% {
+        opacity: 1;
+        transform: 
+            translateY(-10px) 
+            rotate(0deg) 
+            scale(1)
+            translateX(0)
+            skew(0deg, 0deg);
+    }
+    40% {
+        opacity: 0.8;
+        transform: 
+            translateY(60vh) 
+            rotate(360deg) 
+            scale(0.9)
+            translateX(calc(var(--wind-x) * 50px))
+            skew(15deg, 10deg);
+    }
+    100% {
+        opacity: 0;
+        transform: 
+            translateY(100vh) 
+            rotate(720deg) 
+            scale(0.6)
+            translateX(calc(var(--wind-x) * 100px))
+            skew(30deg, 20deg);
+    }
+}
+
+/* Circular Spiral Confetti Animation */
+@keyframes confetti-spiral {
+    0% {
+        opacity: 1;
+        transform: 
+            translateY(-10px) 
+            rotate(0deg) 
+            scale(1)
+            translateX(0)
+            translateY(0);
+    }
+    60% {
+        opacity: 0.7;
+        transform: 
+            translateY(70vh) 
+            rotate(540deg) 
+            scale(0.8)
+            translateX(calc(50px * sin(var(--spiral-angle))))
+            translateY(calc(50px * cos(var(--spiral-angle))));
+    }
+    100% {
+        opacity: 0;
+        transform: 
+            translateY(100vh) 
+            rotate(1080deg) 
+            scale(0.5)
+            translateX(calc(100px * sin(var(--spiral-angle))))
+            translateY(calc(100px * cos(var(--spiral-angle))));
+    }
+}
+
+/* Chaotic Burst Confetti Animation */
+@keyframes confetti-burst {
+    0% {
+        opacity: 1;
+        transform: 
+            translateY(-10px) 
+            rotate(0deg) 
+            scale(1)
+            translateX(0)
+            translateY(0)
+            rotateZ(0deg);
+    }
+    50% {
+        opacity: 0.6;
+        transform: 
+            translateY(50vh) 
+            rotate(calc(var(--burst-rotation) * 2)) 
+            scale(0.9)
+            translateX(calc(var(--burst-x) * 70px))
+            translateY(calc(var(--burst-y) * 70px))
+            rotateZ(180deg);
+    }
+    100% {
+        opacity: 0;
+        transform: 
+            translateY(100vh) 
+            rotate(calc(var(--burst-rotation) * 4)) 
+            scale(0.5)
+            translateX(calc(var(--burst-x) * 150px))
+            translateY(calc(var(--burst-y) * 150px))
+            rotateZ(360deg);
+    }
+}
+
+/* Shared Confetti Particle Styles */
+.confetti-particle {
+    position: fixed;
+    top: -50px;
+    pointer-events: none;
+    z-index: var(--confetti-z-index);
+    will-change: transform, opacity;
+    border-radius: 4px;
+    
+    /* Enhanced Box Shadow for Depth */
+    box-shadow: 
+        0 3px 6px rgba(0,0,0,0.12), 
+        0 2px 4px rgba(0,0,0,0.08);
+    
+    /* Perspective and 3D Transformations */
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+}
+
+/* Primary Fall Animation */
+.confetti-particle-primary {
+    animation: 
+        confetti-fall-primary 
+        var(--fall-duration, 3s) 
+        cubic-bezier(0.25, 0.1, 0.25, 1) 
+        var(--delay, 0s) 
+        1 
+        forwards;
+}
+
+/* Tornado Animation */
+.confetti-particle-tornado {
+    animation: 
+        confetti-tornado 
+        var(--fall-duration, 3.5s) 
+        cubic-bezier(0.45, 0.05, 0.55, 0.95) 
+        var(--delay, 0s) 
+        1 
+        forwards;
+}
+
+/* Spiral Animation */
+.confetti-particle-spiral {
+    animation: 
+        confetti-spiral 
+        var(--fall-duration, 4s) 
+        cubic-bezier(0.36, 0, 0.66, -0.56) 
+        var(--delay, 0s) 
+        1 
+        forwards;
+}
+
+/* Burst Animation */
+.confetti-particle-burst {
+    animation: 
+        confetti-burst 
+        var(--fall-duration, 3.2s) 
+        cubic-bezier(0.68, -0.55, 0.27, 1.55) 
+        var(--delay, 0s) 
+        1 
+        forwards;
+}
+
+/* Responsive Adjustments */
+@media (prefers-reduced-motion: reduce) {
+    .confetti-particle {
+        animation: none;
+        opacity: 0;
+    }
+}

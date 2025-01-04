@@ -1,0 +1,177 @@
+:root {
+    /* Enhanced Color Palette */
+    --primary-color: #1a5f7a;
+    --secondary-color: #2c8eb3;
+    --accent-color: #4ecdc4;
+    --background-primary: #f9fafb;
+    --background-secondary: #e9ecef;
+    --text-primary: #2c3e50;
+    --text-secondary: #34495e;
+    --border-color: #d1d8e0;
+    --shadow-subtle: rgba(0, 0, 0, 0.08);
+    --shadow-medium: rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, #2c8eb3 0%, #4ecdc4 100%);
+    
+    /* Advanced Typography */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    
+    /* Sophisticated Transitions */
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-speed-fast: 0.2s;
+    --transition-speed-medium: 0.3s;
+}
+
+/* * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+} */
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.privacy-page {
+    max-width: 1400px;
+    margin: 3rem auto;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 
+        0 15px 35px var(--shadow-subtle),
+        0 5px 15px var(--shadow-medium);
+    overflow: hidden;
+    perspective: 1000px;
+    transition: all var(--transition-speed-medium) var(--transition-smooth);
+}
+
+.privacy-header {
+    background: var(--gradient-primary);
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+    margin-top: 3rem;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(20px);
+}
+
+.privacy-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.05);
+    transform: rotate(-45deg);
+}
+
+.privacy-header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-overview {
+    background-color: var(--background-secondary);
+    padding: 3rem;
+    margin: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px var(--shadow-subtle);
+}
+
+.privacy-accordion {
+    margin: 2rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 10px 35px var(--shadow-subtle);
+}
+
+.privacy-section {
+    border-bottom: 1px solid var(--border-color);
+    transition: all var(--transition-speed-medium) var(--transition-smooth);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    cursor: pointer;
+    background-color: var(--background-secondary);
+    transition: background-color var(--transition-speed-fast) ease;
+}
+
+.section-header:hover {
+    background-color: color-mix(in srgb, var(--secondary-color) 10%, white);
+}
+
+.section-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    transition: color var(--transition-speed-fast) ease;
+}
+
+.section-header:hover h3 {
+    color: var(--secondary-color);
+}
+
+.section-content {
+    padding: 2rem;
+    background: white;
+    line-height: 1.8;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.privacy-contact, .privacy-consent {
+    background-color: var(--background-secondary);
+    margin: 2rem;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px var(--shadow-subtle);
+}
+
+.contact-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.privacy-footer {
+    background-color: var(--background-secondary);
+    padding: 2rem;
+    text-align: center;
+}
+
+.footer-links a {
+    color: var(--secondary-color);
+    margin: 0 1rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-speed-fast) ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    .privacy-page {
+        margin: 1rem;
+        border-radius: 8px;
+    }
+    
+    .privacy-header h1 {
+        font-size: 2.5rem;
+    }
+}
