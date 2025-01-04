@@ -4,7 +4,7 @@ import './RealEstateGrantPage.css';
 // Import images - add these at the top of your file
 import urban1Image from '/public/Images/urban1.jpg';
 import ruralImage from '/public/Images/rural.jpg';
-import com1Image from '/public/Images/com1.webp';
+import com1Image from '/public/Images/com.webp';
 
 const RealEstateGrantPage = () => {
   const [activeSection, setActiveSection] = useState(1);

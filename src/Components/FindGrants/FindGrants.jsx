@@ -164,10 +164,31 @@ const FindGrants = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
-    if (actions.loadGrants) {
-      actions.loadGrants(selectedCategory);
-    }
-  }, [selectedCategory, actions]);
+    // Prevent excessive calls during component updates
+    let isSubscribed = true;
+  
+    const loadGrantsData = async () => {
+      if (!actions.loadGrants || !isSubscribed) return;
+  
+      try {
+        // Add a small delay to prevent rapid successive calls
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (isSubscribed) {
+          await actions.loadGrants(selectedCategory);
+        }
+      } catch (error) {
+        console.error('Error loading grants:', error);
+      }
+    };
+  
+    loadGrantsData();
+  
+    // Cleanup function
+    return () => {
+      isSubscribed = false;
+    };
+  }, [selectedCategory]); // Remove actions from dependency array to prevent unnecessary rerenders
 
   const handleSearch = (e) => {
     e.preventDefault();
