@@ -382,15 +382,21 @@ const GrantsProvider = ({ children }) => {
     },
     
     loadGrants: async () => {
-      if (state.loadingStates.grants) return;
+      // Early return if already loading or if grants are already loaded
+      if (state.loadingStates.grants || Object.keys(state.grants).length > 0) return;
     
       try {
-        dispatch({ type: ACTION_TYPES.SET_LOADING_STATE, payload: { key: 'grants', value: true } });
-        const grants = await apiService.get('/grants/all');  // Changed from /grants/${category}
+        dispatch({ 
+          type: ACTION_TYPES.SET_LOADING_STATE, 
+          payload: { key: 'grants', value: true } 
+        });
+        
+        const grants = await apiService.get('/grants/all');
+        
         dispatch({ 
           type: ACTION_TYPES.LOAD_GRANTS, 
           payload: { 
-            category: 'all', // Changed to handle all grants
+            category: 'all',
             grants: Array.isArray(grants) ? grants : [] 
           } 
         });
@@ -400,12 +406,19 @@ const GrantsProvider = ({ children }) => {
           type: ACTION_TYPES.LOAD_GRANTS, 
           payload: { category: 'all', grants: [] } 
         });
-        dispatch({ 
-          type: ACTION_TYPES.SET_ERROR, 
-          payload: handleApiError(error) 
-        });
+        
+        // Only dispatch error if it's a real error, not a connection refused
+        if (error.code !== 'ERR_CONNECTION_REFUSED') {
+          dispatch({ 
+            type: ACTION_TYPES.SET_ERROR, 
+            payload: handleApiError(error) 
+          });
+        }
       } finally {
-        dispatch({ type: ACTION_TYPES.SET_LOADING_STATE, payload: { key: 'grants', value: false } });
+        dispatch({ 
+          type: ACTION_TYPES.SET_LOADING_STATE, 
+          payload: { key: 'grants', value: false } 
+        });
       }
     },
     
