@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './InfoPage.css';
 
 const InfoSectionPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedFaqs, setExpandedFaqs] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
