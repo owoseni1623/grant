@@ -327,6 +327,19 @@ textarea[name="fundingPurpose"]:focus {
   cursor: pointer;
 }
 
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: #dc3545;
+}
+
 
 /* Responsive Design */
 @media screen and (max-width: 768px) {
