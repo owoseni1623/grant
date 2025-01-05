@@ -9,9 +9,6 @@ import { RegisterGrantProvider } from './Context/RegisterGrantContext';
 import NotificationProvider from './Context/NotificationContext';
 import { ApplicationFormProvider } from './Context/ApplicationFormContext';
 
-// Import the new GrantSuccessPage
-import GrantSuccessPage from './Components/SuccessPage/GrantSuccessPage';
-
 // ScrollToTop Component
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -23,7 +20,7 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Import all your page components
+// Import all components
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
 import HomePage from './Components/Home/HomePage';
@@ -50,8 +47,10 @@ import LatestNewsPage from './Components/LatestNews/LatestNewsPage';
 import LoginPage from './Components/LoginPage/LoginPage';
 import ForgotPasswordPage from './Components/ForgotPasswordPage/ForgotPasswordPage';
 import AdminDashboard from './Components/admin/AdminDashboard';
-import { ToastContainer } from 'react-toastify';
+import GrantSuccessPage from './Components/SuccessPage/GrantSuccessPage';
 import GrantInfoCenter from './Components/InfoPage/InfoPage';
+import InfoSectionPage from './Components/InfoSection/InfoSectionPage';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -91,12 +90,8 @@ function App() {
                       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                       <Route path="/admin/dashboard" element={<AdminDashboard />} />
                       <Route path="/info-session" element={<GrantInfoCenter />} />
-                      
-                      {/* Updated route for Grant Success Page to use location state */}
-                      <Route 
-                        path="/grant-success" 
-                        element={<GrantSuccessPage />} 
-                      />
+                      <Route path="/info-section" element={<InfoSectionPage />} />
+                      <Route path="/grant-success" element={<GrantSuccessPage />} />
                     </Routes>
                   </main>
                   <Footer />
