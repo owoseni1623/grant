@@ -180,67 +180,98 @@ export const ApplicationFormProvider = ({ children }) => {
 
   // Secure Form Submission Method
   const submitForm = useCallback(async () => {
-    // Comprehensive validation before submission
     if (!validateCurrentStep()) {
       return Promise.reject(new Error('Validation failed'));
     }
-
-    // Prepare FormData for secure multipart submission
-    const submissionData = new FormData();
-    
-    // Securely append all form fields
-    Object.keys(formData).forEach(key => {
-      const value = formData[key];
-      
-      // Special handling for files and boolean values
-      if (key === 'idCardFront' || key === 'idCardBack') {
-        if (value instanceof File) {
-          submissionData.append(key, value);
-        }
-      } else if (typeof value === 'boolean') {
-        submissionData.append(key, value ? 'true' : 'false');
-      } else if (value !== null && value !== undefined) {
-        submissionData.append(key, String(value));
-      }
-    });
-
-    // Set submission state
+  
     setIsSubmitting(true);
     setErrors({});
     setSubmissionResponse(null);
-
+  
     try {
-      // Secure API endpoint with enhanced security
-      const response = await axios.post('/api/secure-application-submit', submissionData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          // Add any additional security headers like CSRF token
+      // Create FormData object to match backend expectations
+      const submissionData = new FormData();
+      
+      // Format data to match backend schema structure
+      const formattedData = {
+        personalInfo: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          ssn: formData.ssn,
+          dateOfBirth: formData.dateOfBirth,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          gender: formData.gender,
+          ethnicity: formData.ethnicity,
         },
-        withCredentials: true, // Enable for additional security
-        timeout: 20000 // 20 seconds timeout
+        employmentInfo: {
+          employmentStatus: formData.employmentStatus,
+          incomeLevel: formData.incomeLevel,
+          educationLevel: formData.educationLevel,
+          citizenshipStatus: formData.citizenshipStatus
+        },
+        addressInfo: {
+          streetAddress: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip
+        },
+        fundingInfo: {
+          fundingType: formData.fundingType,
+          fundingAmount: parseFloat(formData.fundingAmount),
+          fundingPurpose: formData.fundingPurpose,
+          timeframe: formData.timeframe
+        },
+        agreeToCommunication: formData.agreeToCommunication,
+        termsAccepted: formData.termsAccepted
+      };
+  
+      // Append all formatted data
+      Object.entries(formattedData).forEach(([key, value]) => {
+        if (typeof value === 'object') {
+          submissionData.append(key, JSON.stringify(value));
+        } else {
+          submissionData.append(key, value);
+        }
       });
-
-      // Success handling
+  
+      // Append files separately
+      if (formData.idCardFront instanceof File) {
+        submissionData.append('idCardFront', formData.idCardFront);
+      }
+      if (formData.idCardBack instanceof File) {
+        submissionData.append('idCardBack', formData.idCardBack);
+      }
+  
+      // Update API endpoint to match backend route
+      const response = await axios.post('/api/grants/submit', submissionData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true,
+        timeout: 20000
+      });
+  
       setSubmissionResponse(response.data);
       setIsSubmitting(false);
       return response.data;
+  
     } catch (error) {
       console.error('Submission Error:', error);
-
-      // Detailed error handling
+      
       const errorMessage = 
         error.response?.data?.message || 
         error.response?.data?.errors ||
         error.message || 
         'An unexpected error occurred during submission';
-
+  
       setErrors(prev => ({
         ...prev,
         submission: typeof errorMessage === 'object' 
           ? JSON.stringify(errorMessage) 
           : errorMessage
       }));
-
+  
       setIsSubmitting(false);
       throw error;
     }
