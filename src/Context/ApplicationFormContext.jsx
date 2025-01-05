@@ -190,58 +190,71 @@ export const ApplicationFormProvider = ({ children }) => {
   
     try {
       // Create FormData object
-      const formData = new FormData();
+      const submissionFormData = new FormData();
       
-      // Append all individual fields directly
       // Personal Info
-      formData.append('firstName', formData.firstName);
-      formData.append('lastName', formData.lastName);
-      formData.append('ssn', formData.ssn);
-      formData.append('dateOfBirth', formData.dateOfBirth);
-      formData.append('email', formData.email);
-      formData.append('phoneNumber', formData.phoneNumber);
-      formData.append('gender', formData.gender);
-      formData.append('ethnicity', formData.ethnicity);
+      submissionFormData.append('firstName', formData.firstName || '');
+      submissionFormData.append('lastName', formData.lastName || '');
+      submissionFormData.append('ssn', formData.ssn || '');
+      submissionFormData.append('dateOfBirth', formData.dateOfBirth || '');
+      submissionFormData.append('email', formData.email || '');
+      submissionFormData.append('phoneNumber', formData.phoneNumber || '');
+      submissionFormData.append('gender', formData.gender || '');
+      submissionFormData.append('ethnicity', formData.ethnicity || '');
 
       // Employment Info
-      formData.append('employmentStatus', formData.employmentStatus);
-      formData.append('incomeLevel', formData.incomeLevel);
-      formData.append('educationLevel', formData.educationLevel);
-      formData.append('citizenshipStatus', formData.citizenshipStatus);
+      submissionFormData.append('employmentStatus', formData.employmentStatus || '');
+      submissionFormData.append('incomeLevel', formData.incomeLevel || '');
+      submissionFormData.append('educationLevel', formData.educationLevel || '');
+      submissionFormData.append('citizenshipStatus', formData.citizenshipStatus || '');
 
       // Address Info
-      formData.append('streetAddress', formData.streetAddress);
-      formData.append('city', formData.city);
-      formData.append('state', formData.state);
-      formData.append('zip', formData.zip);
+      submissionFormData.append('streetAddress', formData.streetAddress || '');
+      submissionFormData.append('city', formData.city || '');
+      submissionFormData.append('state', formData.state || '');
+      submissionFormData.append('zip', formData.zip || '');
 
       // Funding Info
-      formData.append('fundingType', formData.fundingType);
-      formData.append('fundingAmount', formData.fundingAmount);
-      formData.append('fundingPurpose', formData.fundingPurpose);
-      formData.append('timeframe', formData.timeframe);
+      submissionFormData.append('fundingType', formData.fundingType || '');
+      submissionFormData.append('fundingAmount', formData.fundingAmount?.toString() || '');
+      submissionFormData.append('fundingPurpose', formData.fundingPurpose || '');
+      submissionFormData.append('timeframe', formData.timeframe || '');
 
       // Other Fields
-      formData.append('agreeToCommunication', formData.agreeToCommunication);
-      formData.append('termsAccepted', formData.termsAccepted);
+      submissionFormData.append('agreeToCommunication', formData.agreeToCommunication?.toString() || 'false');
+      submissionFormData.append('termsAccepted', formData.termsAccepted?.toString() || 'false');
 
-      // Append files
-      if (formData.idCardFront instanceof File) {
-        formData.append('idCardFront', formData.idCardFront);
+      // Files - only append if they exist
+      if (formData.idCardFront) {
+        submissionFormData.append('idCardFront', formData.idCardFront);
       }
-      if (formData.idCardBack instanceof File) {
-        formData.append('idCardBack', formData.idCardBack);
+      if (formData.idCardBack) {
+        submissionFormData.append('idCardBack', formData.idCardBack);
       }
 
-      const baseURL = 'https://grant-api.onrender.com';
-      
-      const response = await axios.post(`${baseURL}/api/grants/submit`, formData, {
+      // For debugging - log the FormData entries
+      for (let pair of submissionFormData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
+      const response = await axios({
+        method: 'post',
+        url: 'https://grant-api.onrender.com/api/grants/submit',
+        data: submissionFormData,
         headers: { 
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
         },
-        withCredentials: true,
-        timeout: 30000 // Increased timeout to 30 seconds since render.com free tier might be slower
+        withCredentials: false,
+        timeout: 60000,
+        validateStatus: function (status) {
+          return status >= 200 && status < 500; // Allow us to see the error response
+        }
       });
+
+      if (response.status === 400) {
+        throw new Error(JSON.stringify(response.data));
+      }
   
       setSubmissionResponse(response.data);
       setIsSubmitting(false);
@@ -252,14 +265,22 @@ export const ApplicationFormProvider = ({ children }) => {
       
       let errorMessage;
       if (error.response) {
-        // Server responded with error
-        errorMessage = error.response.data.message || error.response.data.errors;
-      } else if (error.request) {
-        // Request made but no response
-        errorMessage = 'No response received from server. Please check your connection.';
+        // Get detailed error message from response
+        errorMessage = error.response.data.message || 
+                      error.response.data.errors || 
+                      JSON.stringify(error.response.data) ||
+                      'Server validation failed';
+        console.log('Detailed error response:', error.response.data);
+      } else if (error.message) {
+        try {
+          // Try to parse the error message if it's JSON
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.message || parsedError.errors || error.message;
+        } catch {
+          errorMessage = error.message;
+        }
       } else {
-        // Error in request setup
-        errorMessage = 'Error setting up the request.';
+        errorMessage = 'An unexpected error occurred';
       }
   
       setErrors(prev => ({
