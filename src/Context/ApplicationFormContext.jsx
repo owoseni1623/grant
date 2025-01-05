@@ -107,20 +107,26 @@ export const ApplicationFormProvider = ({ children }) => {
       1: () => {
         const newErrors = {};
         
+        // Required field validations for step 1
         if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
         if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-        
+        if (!formData.ssn.trim()) newErrors.ssn = 'SSN is required';
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
         if (!formData.email.trim()) {
           newErrors.email = 'Email is required';
         } else if (!ValidationUtils.validateEmail(formData.email)) {
           newErrors.email = 'Invalid email format';
         }
-        
-        if (!formData.phoneNumber.trim()) {
-          newErrors.phoneNumber = 'Phone number is required';
-        } else if (!ValidationUtils.validatePhoneNumber(formData.phoneNumber)) {
-          newErrors.phoneNumber = 'Invalid phone number format';
-        }
+        if (!formData.password) newErrors.password = 'Password is required';
+        if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+        if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Street address is required';
+        if (!formData.city.trim()) newErrors.city = 'City is required';
+        if (!formData.state) newErrors.state = 'State is required';
+        if (!formData.zip.trim()) newErrors.zip = 'ZIP code is required';
+        if (!formData.fundingType) newErrors.fundingType = 'Funding type is required';
+        if (!formData.fundingAmount) newErrors.fundingAmount = 'Funding amount is required';
+        if (!formData.fundingPurpose.trim()) newErrors.fundingPurpose = 'Funding purpose is required';
+        if (!formData.timeframe) newErrors.timeframe = 'Timeframe is required';
         
         return newErrors;
       },

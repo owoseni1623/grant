@@ -185,7 +185,15 @@ const Apply = () => {
 
         {/* Personal Information Step */}
         {currentStep === 1 && (
-          <form onSubmit={(e) => { e.preventDefault(); nextStep(); }} className="form-step">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const isValid = validateCurrentStep();
+            if (isValid) {
+              moveToNextStep();
+            } else {
+              alert('Please complete all required fields before proceeding.');
+            }
+          }} className="form-step">
             <h3>Personal Information</h3>
             
             <div className="form-row">
