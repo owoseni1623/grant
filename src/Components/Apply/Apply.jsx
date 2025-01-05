@@ -26,12 +26,12 @@ const Apply = () => {
     formData,
     currentStep,
     updateFormField,
-    // Make sure moveToNextStep is defined here
-    moveToNextStep = () => {}, // Provide a default no-op function if not defined
-    moveToPreviousStep = () => {}, // Same for moveToPreviousStep
+    moveToNextStep = () => {},
+    moveToPreviousStep = () => {},
     submitForm,
     errors,
     isSubmitting,
+    validateCurrentStep,
   } = useApplicationForm();
 
   // Local state for password visibility
