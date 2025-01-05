@@ -189,67 +189,58 @@ export const ApplicationFormProvider = ({ children }) => {
     setSubmissionResponse(null);
   
     try {
-      // Create FormData object to match backend expectations
-      const submissionData = new FormData();
+      // Create FormData object
+      const formData = new FormData();
       
-      // Format data to match backend schema structure
-      const formattedData = {
-        personalInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          ssn: formData.ssn,
-          dateOfBirth: formData.dateOfBirth,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          gender: formData.gender,
-          ethnicity: formData.ethnicity,
-        },
-        employmentInfo: {
-          employmentStatus: formData.employmentStatus,
-          incomeLevel: formData.incomeLevel,
-          educationLevel: formData.educationLevel,
-          citizenshipStatus: formData.citizenshipStatus
-        },
-        addressInfo: {
-          streetAddress: formData.streetAddress,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zip
-        },
-        fundingInfo: {
-          fundingType: formData.fundingType,
-          fundingAmount: parseFloat(formData.fundingAmount),
-          fundingPurpose: formData.fundingPurpose,
-          timeframe: formData.timeframe
-        },
-        agreeToCommunication: formData.agreeToCommunication,
-        termsAccepted: formData.termsAccepted
-      };
-  
-      // Append all formatted data
-      Object.entries(formattedData).forEach(([key, value]) => {
-        if (typeof value === 'object') {
-          submissionData.append(key, JSON.stringify(value));
-        } else {
-          submissionData.append(key, value);
-        }
-      });
-  
-      // Append files separately
+      // Append all individual fields directly
+      // Personal Info
+      formData.append('firstName', formData.firstName);
+      formData.append('lastName', formData.lastName);
+      formData.append('ssn', formData.ssn);
+      formData.append('dateOfBirth', formData.dateOfBirth);
+      formData.append('email', formData.email);
+      formData.append('phoneNumber', formData.phoneNumber);
+      formData.append('gender', formData.gender);
+      formData.append('ethnicity', formData.ethnicity);
+
+      // Employment Info
+      formData.append('employmentStatus', formData.employmentStatus);
+      formData.append('incomeLevel', formData.incomeLevel);
+      formData.append('educationLevel', formData.educationLevel);
+      formData.append('citizenshipStatus', formData.citizenshipStatus);
+
+      // Address Info
+      formData.append('streetAddress', formData.streetAddress);
+      formData.append('city', formData.city);
+      formData.append('state', formData.state);
+      formData.append('zip', formData.zip);
+
+      // Funding Info
+      formData.append('fundingType', formData.fundingType);
+      formData.append('fundingAmount', formData.fundingAmount);
+      formData.append('fundingPurpose', formData.fundingPurpose);
+      formData.append('timeframe', formData.timeframe);
+
+      // Other Fields
+      formData.append('agreeToCommunication', formData.agreeToCommunication);
+      formData.append('termsAccepted', formData.termsAccepted);
+
+      // Append files
       if (formData.idCardFront instanceof File) {
-        submissionData.append('idCardFront', formData.idCardFront);
+        formData.append('idCardFront', formData.idCardFront);
       }
       if (formData.idCardBack instanceof File) {
-        submissionData.append('idCardBack', formData.idCardBack);
+        formData.append('idCardBack', formData.idCardBack);
       }
-  
-      // Update API endpoint to match backend route
-      const response = await axios.post('/api/grants/submit', submissionData, {
+
+      const baseURL = 'https://grant-api.onrender.com';
+      
+      const response = await axios.post(`${baseURL}/api/grants/submit`, formData, {
         headers: { 
           'Content-Type': 'multipart/form-data'
         },
         withCredentials: true,
-        timeout: 20000
+        timeout: 30000 // Increased timeout to 30 seconds since render.com free tier might be slower
       });
   
       setSubmissionResponse(response.data);
@@ -259,11 +250,17 @@ export const ApplicationFormProvider = ({ children }) => {
     } catch (error) {
       console.error('Submission Error:', error);
       
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.response?.data?.errors ||
-        error.message || 
-        'An unexpected error occurred during submission';
+      let errorMessage;
+      if (error.response) {
+        // Server responded with error
+        errorMessage = error.response.data.message || error.response.data.errors;
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'No response received from server. Please check your connection.';
+      } else {
+        // Error in request setup
+        errorMessage = 'Error setting up the request.';
+      }
   
       setErrors(prev => ({
         ...prev,
@@ -275,7 +272,7 @@ export const ApplicationFormProvider = ({ children }) => {
       setIsSubmitting(false);
       throw error;
     }
-  }, [formData, validateCurrentStep]);
+}, [formData, validateCurrentStep]);
 
   // Reset Form Method
   const resetForm = useCallback(() => {
