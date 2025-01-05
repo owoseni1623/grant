@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './CommunityGrantPage.css';
 
 
@@ -92,9 +93,9 @@ const CommunityGrantPage = () => {
               <button className="primary-btn pulse" onClick={handleLearnMore}>
                 Learn More
               </button>
-              <a href="/apply" className="secondary-btn glow">
+              <Link to="/apply" className="secondary-btn glow">
                 Apply Now
-              </a>
+              </Link>
             </div>
           </div>
           <div className="hero-image">
@@ -531,7 +532,9 @@ const CommunityGrantPage = () => {
           <h2>Ready to Make an Impact?</h2>
           <p>Join us in building stronger communities through innovative projects.</p>
           <div className="cta-buttons">
-            <a href="/apply" className="apply-btn pulse">Start Your Application</a>
+          <Link to="/apply" className="apply-btn pulse">
+            Start Your Application
+          </Link>
             <button className="schedule-call-btn">Schedule Consultation</button>
           </div>
         </div>

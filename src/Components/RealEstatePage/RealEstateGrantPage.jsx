@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './RealEstateGrantPage.css';
 
 // Import images - add these at the top of your file
@@ -87,12 +88,12 @@ const RealEstateGrantPage = () => {
                     </div>
 
                     <div className="cta-group">
-                        <button className="primary-cta" onClick={handleLearnMore}>
-                            Learn More
-                        </button>
-                        <a href="/apply" className="secondary-cta">
-                            Apply Now
-                        </a>
+                      <button className="primary-cta" onClick={handleLearnMore}>
+                          Learn More
+                      </button>
+                      <Link to="/apply" className="secondary-cta">
+                          Apply Now
+                      </Link>
                     </div>
                 </div>
         </header>
@@ -308,9 +309,9 @@ const RealEstateGrantPage = () => {
         <h2>Your Community Transformation Starts Here</h2>
         <p>Innovative Real Estate Projects. Sustainable Community Development.</p>
         <div className="cta-button-011">
-          <a href="/apply" className="primary-action-011">
-            Start Your Application
-          </a>
+          <Link to="/apply" className="primary-action-011">
+              Start Your Application
+          </Link>
           <button className="secondary-action-011">Download Guidebook</button>
         </div>
       </section>

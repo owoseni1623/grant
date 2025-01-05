@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './BusinessGrantPage.css';
 
 const BusinessGrantPage = () => {
@@ -101,9 +102,9 @@ const BusinessGrantPage = () => {
                         <button onClick={() => setShowModal(true)} className="primary-button">
                             Calculate Your Grant
                         </button>
-                        <a href="/apply" className="secondary-button">
+                        <Link to="/apply" className="secondary-button">
                             Start Application
-                        </a>
+                        </Link>
                     </div>
                 </div>
                 <div className="header-stats">
@@ -244,7 +245,7 @@ const BusinessGrantPage = () => {
                 <h2>Ready to Transform Your Business?</h2>
                 <p>Join hundreds of successful businesses that have accelerated their growth through our grant program.</p>
                 <div className="cta-buttons">
-                    <a href="/apply" className="apply-button">Start Application</a>
+                    <Link to="/apply" className="apply-button">Start Application</Link>
                     <button className="schedule-call-button">Schedule a Call</button>
                 </div>
             </section>

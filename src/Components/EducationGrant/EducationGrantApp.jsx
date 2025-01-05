@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './EducationGrantApp.css';
 
 const EducationGrantPage = () => {
@@ -6,6 +7,8 @@ const EducationGrantPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showModal, setShowModal] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  const navigate = useNavigate();
 
   const testimonials = [
     {
@@ -40,9 +43,11 @@ const EducationGrantPage = () => {
     return () => clearInterval(testimonialInterval);
   }, []);
 
-  const handleApplyClick = () => {
-    setShowModal(true);
-  };
+  // const navigate = useNavigate();
+
+    const handleApplyClick = () => {
+      navigate('/apply');
+    };
 
   return (
     <div className={`education-grant-page ${isVisible ? 'visible' : ''}`}>
@@ -271,13 +276,13 @@ const EducationGrantPage = () => {
             <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             <h2>Start Your Grant Application</h2>
             <div className="application-options">
-              <button onClick={() => window.location.href = '/apply'}>
+              <button onClick={() => navigate('/apply', { state: { type: 'undergraduate' }})}>
                 Undergraduate Application
               </button>
-              <button onClick={() => window.location.href = '/apply'}>
+              <button onClick={() => navigate('/apply', { state: { type: 'graduate' }})}>
                 Graduate Application
               </button>
-              <button onClick={() => window.location.href = '/apply'}>
+              <button onClick={() => navigate('/apply', { state: { type: 'research' }})}>
                 Research Grant Application
               </button>
             </div>
