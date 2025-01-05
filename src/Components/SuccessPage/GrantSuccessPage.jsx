@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, Workflow, ArrowRight, FileText, CheckCircle } from 'lucide-react';
-import { useApplicationForm } from '../../Context/ApplicationFormContext'; // Import the context
+import { useApplicationForm } from '../../Context/ApplicationFormContext';
 import './GrantSuccessPage.css';
 import './ConfettiAnimation.css';
 
