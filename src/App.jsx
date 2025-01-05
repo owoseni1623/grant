@@ -49,7 +49,7 @@ import ForgotPasswordPage from './Components/ForgotPasswordPage/ForgotPasswordPa
 import AdminDashboard from './Components/admin/AdminDashboard';
 import GrantSuccessPage from './Components/SuccessPage/GrantSuccessPage';
 import GrantInfoCenter from './Components/InfoPage/InfoPage';
-import InfoSectionPage from './Components/InfoSection/InfoSectionPage';
+import InfoSectionPage from './Components/InfoPage/InfoPage';
 import { ToastContainer } from 'react-toastify';
 
 function App() {
