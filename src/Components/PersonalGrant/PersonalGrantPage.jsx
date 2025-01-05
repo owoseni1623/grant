@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './PersonalGrantPage.css'
 
 const PersonalGrantPage = () => {
@@ -38,8 +39,8 @@ const PersonalGrantPage = () => {
             <h1>Personal Development Grant Program</h1>
             <p className="header-subtitle">Empowering Individuals to Achieve Their Dreams</p>
             <div className="header-cta">
-              <a href="/apply" className="apply-button primary">Apply Now</a>
-              <a href="/info-session" className="info-button secondary">Join Info Session</a>
+              <Link to="/apply" className="apply-button primary">Apply Now</Link>
+              <Link to="/info-session" className="info-button secondary">Join Info Session</Link>
             </div>
             <div className="header-stats">
               <div className="stat-item">
@@ -420,7 +421,7 @@ const PersonalGrantPage = () => {
 
       <div className={`floating-cta ${showScrollTop ? 'show' : ''}`}>
         <button onClick={scrollToTop} className="scroll-top" aria-label="Scroll to top">↑</button>
-        <a href="/apply" className="apply-button">Apply Now</a>
+        <Link to="/apply" className="apply-button">Apply Now</Link>
       </div>
     </div>
     </div>
