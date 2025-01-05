@@ -30,10 +30,11 @@ const RealEstateGrantPage = () => {
     });
   };
 
-  const handleLearnMore = () => {
-    const element = document.getElementById('grant-details');
-    element.scrollIntoView({ behavior: 'smooth' });
-  };
+  // const CTAGroup = () => {
+    const handleLearnMore = () => {
+      const element = document.getElementById('grant-details');
+      element?.scrollIntoView({ behavior: 'smooth' });
+    };
 
   const successStories = [
     {
@@ -62,6 +63,8 @@ const RealEstateGrantPage = () => {
   const toggleAccordion = (index) => {
     setActiveAccordion(activeAccordion === index ? null : index);
   };
+  
+  
 
   return (
     <div className="real-estate-grant-page">
@@ -88,11 +91,19 @@ const RealEstateGrantPage = () => {
                     </div>
 
                     <div className="cta-group">
-                      <button className="primary-cta" onClick={handleLearnMore}>
-                          Learn More
+                      <button 
+                        className="primary-cta" 
+                        onClick={handleLearnMore}
+                        type="button"
+                      >
+                        Learn More
                       </button>
-                      <Link to="/apply" className="secondary-cta">
-                          Apply Now
+                      <Link 
+                        to="/apply" 
+                        className="secondary-cta"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        Apply Now
                       </Link>
                     </div>
                 </div>
