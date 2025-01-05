@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './InfoPage.css';
 
 const InfoSectionPage = () => {
@@ -23,6 +23,11 @@ const InfoSectionPage = () => {
   const showNotification = (message) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleApply = (grantTitle) => {
+    // You can pass grant-specific data through the navigation
+    navigate('/apply', { state: { grantTitle } });
   };
 
   const categories = [
@@ -214,12 +219,12 @@ const InfoSectionPage = () => {
               <p className="info010-grant-amount">{grant.amount}</p>
               <p className="info010-grant-deadline">Deadline: {grant.deadline}</p>
               <p>{grant.description}</p>
-              <Link 
-                to={`/apply/${grant.title.toLowerCase().replace(/\s+/g, '-')}`}
+              <button 
+                onClick={() => handleApply(grant.title)}
                 className="info010-apply-button"
               >
                 Apply Now
-              </Link>
+              </button>
             </div>
           ))}
         </div>
@@ -261,12 +266,6 @@ const InfoSectionPage = () => {
                 <p><strong>Amount:</strong> {grant.amount}</p>
                 <p><strong>Deadline:</strong> {grant.deadline}</p>
                 <p>{grant.description}</p>
-                <Link 
-                  to={`/apply/${grant.title.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="info010-apply-button"
-                >
-                  Apply Now
-                </Link>
               </div>
             </div>
           ))}
@@ -419,6 +418,8 @@ const InfoSectionPage = () => {
         {activeTab === 'resources' && renderResourcesSection()}
         {activeTab === 'help' && renderHelpSection()}
       </main>
+
+      
     </div>
   );
 };
