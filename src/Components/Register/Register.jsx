@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegisterGrant } from '../../Context/RegisterGrantContext';
-import './Register.css';
 
 const Register = () => {
   const {
@@ -29,23 +28,23 @@ const Register = () => {
   };
 
   return (
-    <div className="grants-registration-page">
-      <div className="register-container">
-        <div className="register-header">
+    <div className="reg020-grants-registration-page">
+      <div className="reg020-register-container">
+        <div className="reg020-register-header">
           <h1>REGISTER</h1>
-          <p className="register-info">
+          <p className="reg020-register-info">
             Please enter your information below to create a new Grants.gov account. 
             Required fields are marked with an asterisk (*).
           </p>
         </div>
 
-        <form onSubmit={handleRegisterSubmit} className="register-form">
-          <div className="form-section">
+        <form onSubmit={handleRegisterSubmit} className="reg020-register-form">
+          <div className="reg020-form-section">
             <h2>Contact Information</h2>
             
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="firstName">
-                First Name: <span className="required">*</span>
+                First Name: <span className="reg020-required">*</span>
               </label>
               <input
                 type="text"
@@ -53,14 +52,14 @@ const Register = () => {
                 name="firstName"
                 value={formData.firstName || ''}
                 onChange={handleChange}
-                className={formErrors.firstName ? 'error' : ''}
+                className={formErrors.firstName ? 'reg020-error' : ''}
               />
-              {formErrors.firstName && <span className="error-message">{formErrors.firstName}</span>}
+              {formErrors.firstName && <span className="reg020-error-message">{formErrors.firstName}</span>}
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="lastName">
-                Last Name: <span className="required">*</span>
+                Last Name: <span className="reg020-required">*</span>
               </label>
               <input
                 type="text"
@@ -68,14 +67,14 @@ const Register = () => {
                 name="lastName"
                 value={formData.lastName || ''}
                 onChange={handleChange}
-                className={formErrors.lastName ? 'error' : ''}
+                className={formErrors.lastName ? 'reg020-error' : ''}
               />
-              {formErrors.lastName && <span className="error-message">{formErrors.lastName}</span>}
+              {formErrors.lastName && <span className="reg020-error-message">{formErrors.lastName}</span>}
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="email">
-                Email Address: <span className="required">*</span>
+                Email Address: <span className="reg020-required">*</span>
               </label>
               <input
                 type="email"
@@ -83,15 +82,15 @@ const Register = () => {
                 name="email"
                 value={formData.email || ''}
                 onChange={handleChange}
-                className={formErrors.email ? 'error' : ''}
+                className={formErrors.email ? 'reg020-error' : ''}
                 autoComplete="username"
               />
-              {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+              {formErrors.email && <span className="reg020-error-message">{formErrors.email}</span>}
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="primaryPhone">
-                Primary Phone Number: <span className="required">*</span>
+                Primary Phone Number: <span className="reg020-required">*</span>
               </label>
               <input
                 type="tel"
@@ -99,16 +98,16 @@ const Register = () => {
                 name="primaryPhone"
                 value={formData.primaryPhone || ''}
                 onChange={handleChange}
-                className={formErrors.primaryPhone ? 'error' : ''}
+                className={formErrors.primaryPhone ? 'reg020-error' : ''}
                 placeholder="+234XXXXXXXXXX"
               />
-              {formErrors.primaryPhone && <span className="error-message">{formErrors.primaryPhone}</span>}
-              <small className="help-text">
+              {formErrors.primaryPhone && <span className="reg020-error-message">{formErrors.primaryPhone}</span>}
+              <small className="reg020-help-text">
                 Include country code (e.g., +234 for Nigeria, +1 for USA)
               </small>
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="mobilePhone">Mobile Phone Number:</label>
               <input
                 type="tel"
@@ -116,72 +115,72 @@ const Register = () => {
                 name="mobilePhone"
                 value={formData.mobilePhone || ''}
                 onChange={handleChange}
-                className={formErrors.mobilePhone ? 'error' : ''}
+                className={formErrors.mobilePhone ? 'reg020-error' : ''}
                 placeholder="+234XXXXXXXXXX"
               />
-              {formErrors.mobilePhone && <span className="error-message">{formErrors.mobilePhone}</span>}
-              <small className="help-text">
+              {formErrors.mobilePhone && <span className="reg020-error-message">{formErrors.mobilePhone}</span>}
+              <small className="reg020-help-text">
                 Include country code (e.g., +234 for Nigeria, +1 for USA) for password reset via SMS
               </small>
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="password">
-                Password: <span className="required">*</span>
+                Password: <span className="reg020-required">*</span>
               </label>
-              <div className="password-input-wrapper">
+              <div className="reg020-password-input-wrapper">
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={formData.password || ''}
                   onChange={handleChange}
-                  className={formErrors.password ? 'error' : ''}
+                  className={formErrors.password ? 'reg020-error' : ''}
                   autoComplete="new-password"
                 />
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="reg020-password-toggle"
                   onClick={() => togglePasswordVisibility('password')}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {formErrors.password && <span className="error-message">{formErrors.password}</span>}
+              {formErrors.password && <span className="reg020-error-message">{formErrors.password}</span>}
             </div>
 
-            <div className="form-group">
+            <div className="reg020-form-group">
               <label htmlFor="confirmPassword">
-                Confirm Password: <span className="required">*</span>
+                Confirm Password: <span className="reg020-required">*</span>
               </label>
-              <div className="password-input-wrapper">
+              <div className="reg020-password-input-wrapper">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
                   name="confirmPassword"
                   value={formData.confirmPassword || ''}
                   onChange={handleChange}
-                  className={formErrors.confirmPassword ? 'error' : ''}
+                  className={formErrors.confirmPassword ? 'reg020-error' : ''}
                   autoComplete="new-password"
                 />
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="reg020-password-toggle"
                   onClick={() => togglePasswordVisibility('confirm')}
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {formErrors.confirmPassword && <span className="error-message">{formErrors.confirmPassword}</span>}
+              {formErrors.confirmPassword && <span className="reg020-error-message">{formErrors.confirmPassword}</span>}
             </div>
           </div>
 
-          <div className="form-actions">
+          <div className="reg020-form-actions">
             <button 
               type="submit" 
-              className="submit-button" 
+              className="reg020-submit-button" 
               disabled={loading}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
@@ -189,13 +188,13 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="error-banner">
+            <div className="reg020-error-banner">
               <p>{error}</p>
             </div>
           )}
 
           {success && (
-            <div className="success-banner">
+            <div className="reg020-success-banner">
               <p>Account created successfully! You can now log in.</p>
             </div>
           )}
