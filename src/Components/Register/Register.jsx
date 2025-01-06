@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegisterGrant } from '../../Context/RegisterGrantContext';
+import './Register.css'
 
 const Register = () => {
   const {
