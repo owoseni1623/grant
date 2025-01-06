@@ -7,17 +7,15 @@
   --reg-warning: #f59e0b;
   --reg-background: #f8fafc;
   --reg-surface: #ffffff;
-  --reg-text: #ffffff;
-  --reg-text-light: #ffffff;
+  --reg-text: #000000;
+  --reg-text-light: #64748b;
   --reg-border: #e2e8f0;
   --reg-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --reg-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --reg-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  background-color: #f1f5f9;
+  background-color: var(--reg-background);
   min-height: 100vh;
   padding: 1rem;
-  margin-top: 5rem;
-  transform: scale(0.95);
 }
 
 .reg020-grants-registration-page .reg020-register-container {
@@ -30,6 +28,10 @@
   overflow: hidden;
   transform: translateY(0);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.reg020-grants-registration-page {
+  margin-top: 5rem;
 }
 
 .reg020-grants-registration-page .reg020-register-container:hover {
@@ -50,20 +52,20 @@
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.025em;
-  animation: reg-slideDown 0.5s ease-out;
+  animation: reg020-slideDown 0.5s ease-out;
 }
 
 .reg020-grants-registration-page .reg020-register-info {
   margin-top: 1rem;
   opacity: 0.9;
   font-size: clamp(1rem, 3vw, 1.1rem);
-  animation: reg-fadeIn 0.5s ease-out 0.2s both;
+  animation: reg020-fadeIn 0.5s ease-out 0.2s both;
 }
 
 /* Form Section Styling */
 .reg020-grants-registration-page .reg020-form-section {
   padding: 2.5rem 3rem;
-  background: var(--reg-surface);
+  background: var(--reg-background);
 }
 
 .reg020-grants-registration-page .reg020-form-section h2 {
@@ -109,18 +111,9 @@
   background: var(--reg-surface);
   color: var(--reg-text);
   transition: all 0.2s ease;
-  position: relative; /* Added for input line positioning */
-}
-
-.reg020-grants-registration-page .reg020-form-group input::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--reg-border);
-  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .reg020-grants-registration-page .reg020-form-group input:hover {
@@ -138,7 +131,7 @@
 .reg020-grants-registration-page .reg020-required {
   color: var(--reg-danger);
   margin-left: 0.25rem;
-  animation: reg-pulse 1s infinite;
+  animation: reg020-pulse 1s infinite;
 }
 
 /* Help Text Styling */
@@ -160,7 +153,7 @@
 /* Error Styling */
 .reg020-grants-registration-page .reg020-error {
   border-color: var(--reg-danger) !important;
-  animation: reg-shake 0.5s ease-in-out;
+  animation: reg020-shake 0.5s ease-in-out;
 }
 
 .reg020-grants-registration-page .reg020-error-message {
@@ -170,7 +163,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  animation: reg-slideIn 0.3s ease-out;
+  animation: reg020-slideIn 0.3s ease-out;
 }
 
 .reg020-grants-registration-page .reg020-error-message::before {
@@ -198,6 +191,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .reg020-grants-registration-page .reg020-submit-button {
@@ -269,49 +265,33 @@
   color: var(--reg-primary);
 }
 
-.reg020-password-toggle:active {
+.reg020-grants-registration-page .reg020-password-toggle:active {
   transform: scale(0.95);
 }
 
-/* Scoped Animations */
-@keyframes reg-slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Animations */
+@keyframes reg020-slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes reg-fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes reg020-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes reg-shake {
+@keyframes reg020-shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
 
-@keyframes reg-slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes reg020-slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes reg-pulse {
+@keyframes reg020-pulse {
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
@@ -319,12 +299,6 @@
 
 /* Tablet Breakpoint */
 @media (max-width: 1024px) {
-  .reg020-grants-registration-page {
-    background-color: #f1f5f9;
-    margin: 2rem auto;
-    width: 90%;
-  }
-
   .reg020-grants-registration-page .reg020-register-container {
     margin: 2rem auto;
     width: 90%;
@@ -336,47 +310,40 @@
 
   .reg020-grants-registration-page .reg020-form-section {
     padding: 2rem;
+    background: var(--reg-background);
   }
 
   .reg020-grants-registration-page .reg020-form-actions {
     padding: 0 2rem 2rem;
   }
 
-  .reg020-grants-registration-page .reg020-submit-button,
-  .reg020-grants-registration-page .reg020-cancel-button {
-    min-width: 130px;
-  }
-  
-  .reg020-grants-registration-page .reg020-form-group input::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
+  .reg020-grants-registration-page .reg020-form-group input {
+    border: 2px solid var(--reg-border);
     width: 100%;
-    height: 2px;
-    background: var(--reg-border);
   }
 }
 
 /* Mobile Breakpoint */
 @media (max-width: 768px) {
-  .reg020-grants-registration-page {
-    background-color: #f1f5f9;
-  }
-
   .reg020-grants-registration-page .reg020-register-container {
     margin: 1rem;
     border-radius: 0.5rem;
+    background: var(--reg-surface);
+  }
+
+  .reg020-grants-registration-page .reg020-form-section {
+    background: var(--reg-background);
+  }
+
+  .reg020-grants-registration-page .reg020-form-group input {
+    border: 2px solid var(--reg-border);
+    width: 100%;
   }
 
   .reg020-grants-registration-page .reg020-register-header,
   .reg020-grants-registration-page .reg020-form-section,
   .reg020-grants-registration-page .reg020-form-actions {
     padding: 1.5rem;
-  }
-
-  .reg020-grants-registration-page .reg020-register-header h1 {
-    font-size: 2rem;
   }
 
   .reg020-grants-registration-page .reg020-form-actions {
@@ -387,83 +354,6 @@
   .reg020-grants-registration-page .reg020-cancel-button {
     width: 100%;
   }
-
-  .reg020-grants-registration-page .reg020-form-group input::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--reg-border);
-  }
-}
-
-/* Mobile Breakpoint - 375px */
-@media (max-width: 375px) {
-  .reg020-grants-registration-page {
-    background-color: #f1f5f9;
-  }
-
-  .reg020-grants-registration-page .reg020-register-container {
-    margin: 0.5rem;
-    border-radius: 0.375rem;
-    width: calc(100% - 1rem);
-  }
-
-  .reg020-grants-registration-page .reg020-form-group input::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--reg-border);
-  }
-
-  /* Rest of the styles remain the same */
-}
-
-/* Extra Small Mobile Breakpoint - Below 375px */
-@media (max-width: 320px) {
-  .reg020-grants-registration-page {
-    background-color: #f1f5f9;
-  }
-
-  .reg020-grants-registration-page .reg020-register-container {
-    margin: 0.25rem;
-    width: calc(100% - 0.5rem);
-  }
-
-  .reg020-grants-registration-page .reg020-form-group input::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--reg-border);
-  }
-}
-
-/* Landscape Mode Optimization */
-@media (max-height: 600px) and (orientation: landscape) {
-  .reg020-grants-registration-page .reg020-register-container {
-    margin: 0 auto;
-  }
-
-  .reg020-grants-registration-page .reg020-register-header {
-    padding: 1rem 1.5rem;
-    margin-top: 1rem;
-  }
-
-  .reg020-grants-registration-page .reg020-form-section {
-    padding: 1rem 1.5rem;
-  }
-
-  .reg020-grants-registration-page .reg020-form-group {
-    margin-bottom: 1rem;
-  }
 }
 
 /* Dark Mode Support */
@@ -472,7 +362,7 @@
     --reg-background: #0f172a;
     --reg-surface: #1e293b;
     --reg-text: #ffffff;
-    --reg-text-light: #ffffff;
+    --reg-text-light: #94a3b8;
     --reg-border: #334155;
   }
 }
