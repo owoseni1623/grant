@@ -100,7 +100,7 @@ const Register = () => {
                 value={formData.primaryPhone || ''}
                 onChange={handleChange}
                 className={formErrors.primaryPhone ? 'reg020-error' : ''}
-                placeholder="+234XXXXXXXXXX"
+                placeholder="+1 505-XXX-XXXX"
               />
               {formErrors.primaryPhone && <span className="reg020-error-message">{formErrors.primaryPhone}</span>}
               <small className="reg020-help-text">
@@ -117,7 +117,7 @@ const Register = () => {
                 value={formData.mobilePhone || ''}
                 onChange={handleChange}
                 className={formErrors.mobilePhone ? 'reg020-error' : ''}
-                placeholder="+234XXXXXXXXXX"
+                placeholder="+1 505-XXX-XXXX"
               />
               {formErrors.mobilePhone && <span className="reg020-error-message">{formErrors.mobilePhone}</span>}
               <small className="reg020-help-text">
