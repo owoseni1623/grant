@@ -100,8 +100,12 @@ const Register = () => {
                 value={formData.primaryPhone || ''}
                 onChange={handleChange}
                 className={formErrors.primaryPhone ? 'error' : ''}
+                placeholder="+234XXXXXXXXXX"
               />
               {formErrors.primaryPhone && <span className="error-message">{formErrors.primaryPhone}</span>}
+              <small className="help-text">
+                Include country code (e.g., +234 for Nigeria, +1 for USA)
+              </small>
             </div>
 
             <div className="form-group">
@@ -113,10 +117,11 @@ const Register = () => {
                 value={formData.mobilePhone || ''}
                 onChange={handleChange}
                 className={formErrors.mobilePhone ? 'error' : ''}
+                placeholder="+234XXXXXXXXXX"
               />
               {formErrors.mobilePhone && <span className="error-message">{formErrors.mobilePhone}</span>}
               <small className="help-text">
-                Enter your U.S. mobile phone number for the ability to request a one-time password reset code by text message.
+                Include country code (e.g., +234 for Nigeria, +1 for USA) for password reset via SMS
               </small>
             </div>
 

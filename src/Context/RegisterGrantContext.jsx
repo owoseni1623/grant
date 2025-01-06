@@ -14,8 +14,11 @@ const axiosInstance = axios.create({
 // Validators
 const validators = {
   isValidEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-  formatPhone: (phone) => phone.replace(/\D/g, ''),
-  isValidPhone: (phone) => /^\d{10}$/.test(phone.replace(/\D/g, '')),
+  formatPhone: (phone) => phone.replace(/[^\d+]/g, ''), // Updated to keep + symbol
+  isValidPhone: (phone) => {
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    return /^\+?\d{1,4}\d{6,15}$/.test(cleaned); // Allow country code + phone number
+  },
   isValidPassword: (password) => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
@@ -142,16 +145,23 @@ export const RegisterGrantProvider = ({ children }) => {
         }
         break;
         
-      case 'primaryPhone':
-        const formattedPrimaryPhone = validators.formatPhone(value);
-        if (!value) {
-          errors[name] = 'Primary phone is required';
-        } else if (!validators.isValidPhone(value)) {
-          errors[name] = 'Please enter a valid 10-digit phone number';
-        } else {
-          delete errors[name];
-        }
-        break;
+        case 'primaryPhone':
+          if (!value) {
+            errors[name] = 'Primary phone is required';
+          } else if (!validators.isValidPhone(value)) {
+            errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
+          } else {
+            delete errors[name];
+          }
+          break;
+
+        case 'mobilePhone':
+          if (value && !validators.isValidPhone(value)) {
+            errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
+          } else {
+            delete errors[name];
+          }
+          break;
         
       case 'password':
         if (!value) {
@@ -183,22 +193,6 @@ export const RegisterGrantProvider = ({ children }) => {
         } else {
           delete errors[name];
         }
-        break;
-        
-      case 'mobilePhone':
-        if (value) {
-          const formattedMobilePhone = validators.formatPhone(value);
-          if (!validators.isValidPhone(value)) {
-            errors[name] = 'Please enter a valid 10-digit phone number';
-          } else {
-            delete errors[name];
-          }
-        } else {
-          delete errors[name];
-        }
-        break;
-      
-      default:
         break;
     }
 
