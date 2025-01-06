@@ -104,7 +104,7 @@ const Register = () => {
               />
               {formErrors.primaryPhone && <span className="reg020-error-message">{formErrors.primaryPhone}</span>}
               <small className="reg020-help-text">
-                Include country code (e.g., +234 for Nigeria, +1 for USA)
+                Include country code (e.g., +1 for USA, +44 for United Kingdom (UK), +34 for Spain, )
               </small>
             </div>
 
@@ -121,7 +121,7 @@ const Register = () => {
               />
               {formErrors.mobilePhone && <span className="reg020-error-message">{formErrors.mobilePhone}</span>}
               <small className="reg020-help-text">
-                Include country code (e.g., +234 for Nigeria, +1 for USA) for password reset via SMS
+                Include country code (e.g., +1 for USA, +44 for United Kingdom (UK), +34 for Spain,) for password reset via SMS
               </small>
             </div>
 

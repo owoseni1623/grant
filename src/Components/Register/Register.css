@@ -1,368 +1,412 @@
-.reg020-grants-registration-page {
-  --reg-primary: #2563eb;
-  --reg-primary-dark: #1d4ed8;
-  --reg-secondary: #64748b;
-  --reg-success: #22c55e;
-  --reg-danger: #ef4444;
-  --reg-warning: #f59e0b;
-  --reg-background: #f8fafc;
-  --reg-surface: #ffffff;
-  --reg-text: #000000;
-  --reg-text-light: #64748b;
-  --reg-border: #e2e8f0;
-  --reg-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --reg-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --reg-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  background-color: var(--reg-background);
-  min-height: 100vh;
-  padding: 1rem;
+.reg020-grants-registration-page * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.reg020-grants-registration-page .reg020-register-container {
-  width: 100%;
-  max-width: 800px;
-  margin: 3rem auto;
-  background: var(--reg-surface);
-  border-radius: 1rem;
-  box-shadow: var(--reg-shadow-lg);
+/* Main Container with Dynamic Background */
+.reg020-grants-registration-page {
+  min-height: 100vh;
+  background: 
+    radial-gradient(circle at 0% 0%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(155, 89, 182, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 3rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
   overflow: hidden;
-  transform: translateY(0);
+}
+
+/* Animated Background Elements */
+.reg020-grants-registration-page::before,
+.reg020-grants-registration-page::after {
+  content: '';
+  position: absolute;
+  width: 1000px;
+  height: 1000px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, rgba(52, 152, 219, 0.05), rgba(155, 89, 182, 0.05));
+  animation: floatingBubble 20s infinite linear;
+  z-index: 1;
+}
+
+.reg020-grants-registration-page::after {
+  animation-delay: -10s;
+  animation-duration: 15s;
+}
+
+@keyframes floatingBubble {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Main Container Styling */
+.reg020-register-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.1),
+    0 5px 10px rgba(0, 0, 0, 0.05),
+    inset 0 0 1px rgba(255, 255, 255, 0.5);
+  width: 100%;
+  max-width: 900px;
+  padding: 3.5rem;
+  position: relative;
+  z-index: 2;
+  transform: translateZ(0);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.reg020-grants-registration-page {
-  margin-top: 5rem;
+.reg020-register-container:hover {
+  transform: translateZ(0) scale(1.01);
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.12),
+    0 8px 15px rgba(0, 0, 0, 0.06);
 }
 
-.reg020-grants-registration-page .reg020-register-container:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-}
-
-/* Header Styling */
-.reg020-grants-registration-page .reg020-register-header {
-  background: linear-gradient(135deg, var(--reg-primary), var(--reg-primary-dark));
-  padding: 2.5rem 3rem;
-  margin-top: 2rem;
-  color: white;
-}
-
-.reg020-grants-registration-page .reg020-register-header h1 {
-  font-size: clamp(1.875rem, 5vw, 2.5rem);
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.025em;
-  animation: reg020-slideDown 0.5s ease-out;
-}
-
-.reg020-grants-registration-page .reg020-register-info {
-  margin-top: 1rem;
-  opacity: 0.9;
-  font-size: clamp(1rem, 3vw, 1.1rem);
-  animation: reg020-fadeIn 0.5s ease-out 0.2s both;
-}
-
-/* Form Section Styling */
-.reg020-grants-registration-page .reg020-form-section {
-  padding: 2.5rem 3rem;
-  background: var(--reg-background);
-}
-
-.reg020-grants-registration-page .reg020-form-section h2 {
-  color: var(--reg-text);
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
+/* Header Styles with Advanced Typography */
+.reg020-register-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
   position: relative;
-  padding-bottom: 0.75rem;
 }
 
-.reg020-grants-registration-page .reg020-form-section h2::after {
+.reg020-register-header h1 {
+  color: #1a237e;
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  display: inline-block;
+}
+
+.reg020-register-header h1::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
   height: 4px;
-  background: var(--reg-primary);
+  background: linear-gradient(90deg, #1a237e, #3949ab);
   border-radius: 2px;
 }
 
-/* Form Group Styling */
-.reg020-grants-registration-page .reg020-form-group {
+.reg020-register-info {
+  color: #546e7a;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Form Section Styling */
+.reg020-form-section {
+  margin-bottom: 3rem;
+  animation: slideUpFade 0.6s ease-out forwards;
+}
+
+.reg020-form-section h2 {
+  color: #1a237e;
+  font-size: 1.8rem;
   margin-bottom: 2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid #e3f2fd;
   position: relative;
 }
 
-.reg020-grants-registration-page .reg020-form-group label {
+.reg020-form-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, #1a237e, #3949ab);
+}
+
+/* Enhanced Form Group Styles */
+.reg020-form-group {
+  margin-bottom: 2rem;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.reg020-form-group label {
   display: block;
-  font-weight: 500;
-  color: var(--reg-text);
-  margin-bottom: 0.5rem;
-  transition: color 0.2s ease;
-}
-
-.reg020-grants-registration-page .reg020-form-group input {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  border: 2px solid var(--reg-border);
-  border-radius: 0.75rem;
-  background: var(--reg-surface);
-  color: var(--reg-text);
-  transition: all 0.2s ease;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.reg020-grants-registration-page .reg020-form-group input:hover {
-  border-color: var(--reg-primary);
-}
-
-.reg020-grants-registration-page .reg020-form-group input:focus {
-  outline: none;
-  border-color: var(--reg-primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-  transform: translateY(-1px);
-}
-
-/* Required Field Styling */
-.reg020-grants-registration-page .reg020-required {
-  color: var(--reg-danger);
-  margin-left: 0.25rem;
-  animation: reg020-pulse 1s infinite;
-}
-
-/* Help Text Styling */
-.reg020-grants-registration-page .reg020-help-text {
-  margin-top: 0.5rem;
-  color: var(--reg-text-light);
-  font-size: 0.875rem;
-  line-height: 1.4;
-  opacity: 0;
-  transform: translateY(-5px);
-  transition: all 0.2s ease;
-}
-
-.reg020-grants-registration-page .reg020-form-group:hover .reg020-help-text {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Error Styling */
-.reg020-grants-registration-page .reg020-error {
-  border-color: var(--reg-danger) !important;
-  animation: reg020-shake 0.5s ease-in-out;
-}
-
-.reg020-grants-registration-page .reg020-error-message {
-  color: var(--reg-danger);
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: reg020-slideIn 0.3s ease-out;
-}
-
-.reg020-grants-registration-page .reg020-error-message::before {
-  content: '⚠️';
-}
-
-/* Button Styling */
-.reg020-grants-registration-page .reg020-form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 3rem;
-  padding: 0 3rem 2.5rem;
-}
-
-.reg020-grants-registration-page .reg020-submit-button,
-.reg020-grants-registration-page .reg020-cancel-button {
-  padding: 1rem 2rem;
-  font-size: 1rem;
+  margin-bottom: 0.8rem;
+  color: #37474f;
   font-weight: 600;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
+  font-size: 1.05rem;
+  transition: color 0.3s ease;
 }
 
-.reg020-grants-registration-page .reg020-submit-button {
-  background: var(--reg-primary);
+.reg020-required {
+  color: #e91e63;
+  margin-left: 0.3rem;
+  font-size: 1.2rem;
+}
+
+/* Input Field Styling */
+.reg020-form-group input {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 2px solid #e3f2fd;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.reg020-form-group input:hover {
+  border-color: #bbdefb;
+  background: #ffffff;
+}
+
+.reg020-form-group input:focus {
+  border-color: #1a237e;
+  box-shadow: 0 0 0 4px rgba(26, 35, 126, 0.1);
+  outline: none;
+  background: #ffffff;
+}
+
+/* Password Input Enhancement */
+.reg020-password-input-wrapper {
+  position: relative;
+}
+
+.reg020-password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #546e7a;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.reg020-password-toggle:hover {
+  color: #1a237e;
+  background: rgba(26, 35, 126, 0.1);
+}
+
+/* Help Text Enhancement */
+.reg020-help-text {
+  display: block;
+  margin-top: 0.8rem;
+  color: #78909c;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  transition: opacity 0.3s ease;
+}
+
+/* Error State Styling */
+.reg020-error {
+  border-color: #e91e63 !important;
+}
+
+.reg020-error-message {
+  color: #e91e63;
+  font-size: 0.95rem;
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.reg020-error-message::before {
+  content: '⚠';
+  margin-right: 0.5rem;
+}
+
+/* Advanced Button Styling */
+.reg020-form-actions {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.reg020-submit-button {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
   color: white;
   border: none;
-  box-shadow: var(--reg-shadow);
+  border-radius: 12px;
+  padding: 1.2rem 3.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.reg020-grants-registration-page .reg020-submit-button:hover {
-  background: var(--reg-primary-dark);
+.reg020-submit-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--reg-shadow-lg);
+  box-shadow: 0 6px 20px rgba(26, 35, 126, 0.3);
 }
 
-.reg020-grants-registration-page .reg020-submit-button:active {
+.reg020-submit-button:active {
   transform: translateY(0);
 }
 
-.reg020-grants-registration-page .reg020-cancel-button {
-  background: transparent;
-  color: var(--reg-text);
-  border: 2px solid var(--reg-border);
+.reg020-submit-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease-out;
 }
 
-.reg020-grants-registration-page .reg020-cancel-button:hover {
-  background: var(--reg-background);
-  color: var(--reg-text);
-  border-color: var(--reg-text);
+.reg020-submit-button:hover::after {
+  transform: translate(-50%, -50%) scale(1);
 }
 
 /* Loading State */
-.reg020-grants-registration-page .reg020-submit-button:disabled {
-  background: var(--reg-secondary);
+.reg020-submit-button:disabled {
+  background: #cfd8dc;
   cursor: not-allowed;
   transform: none;
 }
 
-.reg020-grants-registration-page .reg020-password-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
+/* Success/Error Banners */
+.reg020-success-banner,
+.reg020-error-banner {
+  margin-top: 2rem;
+  padding: 1.2rem;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 500;
+  animation: slideFadeIn 0.5s ease-out;
 }
 
-.reg020-grants-registration-page .reg020-password-input-wrapper input {
-  padding-right: 3rem;
+.reg020-success-banner {
+  background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(67, 160, 71, 0.2);
 }
 
-.reg020-grants-registration-page .reg020-password-toggle {
-  position: absolute;
-  right: 1rem;
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  color: var(--reg-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease;
+.reg020-error-banner {
+  background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(229, 57, 53, 0.2);
 }
 
-.reg020-grants-registration-page .reg020-password-toggle:hover {
-  color: var(--reg-primary);
+/* Advanced Animations */
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.reg020-grants-registration-page .reg020-password-toggle:focus {
-  outline: none;
-  color: var(--reg-primary);
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+  50% { transform: translateX(-4px); }
 }
 
-.reg020-grants-registration-page .reg020-password-toggle:active {
-  transform: scale(0.95);
-}
-
-/* Animations */
-@keyframes reg020-slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes reg020-fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes reg020-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-@keyframes reg020-slideIn {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes reg020-pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-/* Tablet Breakpoint */
+/* Enhanced Responsive Design */
 @media (max-width: 1024px) {
-  .reg020-grants-registration-page .reg020-register-container {
-    margin: 2rem auto;
-    width: 90%;
-  }
-
-  .reg020-grants-registration-page .reg020-register-header {
-    padding: 2rem;
-  }
-
-  .reg020-grants-registration-page .reg020-form-section {
-    padding: 2rem;
-    background: var(--reg-background);
-  }
-
-  .reg020-grants-registration-page .reg020-form-actions {
-    padding: 0 2rem 2rem;
-  }
-
-  .reg020-grants-registration-page .reg020-form-group input {
-    border: 2px solid var(--reg-border);
-    width: 100%;
+  .reg020-register-container {
+    max-width: 800px;
+    padding: 3rem;
   }
 }
 
-/* Mobile Breakpoint */
 @media (max-width: 768px) {
-  .reg020-grants-registration-page .reg020-register-container {
-    margin: 1rem;
-    border-radius: 0.5rem;
-    background: var(--reg-surface);
+  .reg020-grants-registration-page {
+    padding: 2rem 1rem;
   }
 
-  .reg020-grants-registration-page .reg020-form-section {
-    background: var(--reg-background);
+  .reg020-register-container {
+    padding: 2.5rem;
   }
 
-  .reg020-grants-registration-page .reg020-form-group input {
-    border: 2px solid var(--reg-border);
-    width: 100%;
+  .reg020-register-header h1 {
+    font-size: 2.5rem;
   }
 
-  .reg020-grants-registration-page .reg020-register-header,
-  .reg020-grants-registration-page .reg020-form-section,
-  .reg020-grants-registration-page .reg020-form-actions {
-    padding: 1.5rem;
-  }
-
-  .reg020-grants-registration-page .reg020-form-actions {
-    flex-direction: column;
-  }
-
-  .reg020-grants-registration-page .reg020-submit-button,
-  .reg020-grants-registration-page .reg020-cancel-button {
-    width: 100%;
+  .reg020-form-section h2 {
+    font-size: 1.6rem;
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
+@media (max-width: 480px) {
   .reg020-grants-registration-page {
-    --reg-background: #0f172a;
-    --reg-surface: #1e293b;
-    --reg-text: #ffffff;
-    --reg-text-light: #94a3b8;
-    --reg-border: #334155;
+    padding: 1rem 0.5rem;
+  }
+
+  .reg020-register-container {
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+  }
+
+  .reg020-register-header h1 {
+    font-size: 2rem;
+  }
+
+  .reg020-register-info {
+    font-size: 1rem;
+  }
+
+  .reg020-form-section h2 {
+    font-size: 1.4rem;
+  }
+
+  .reg020-submit-button {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* Focus Accessibility Enhancement */
+.reg020-form-group input:focus-visible,
+.reg020-password-toggle:focus-visible,
+.reg020-submit-button:focus-visible {
+  outline: 3px solid rgba(26, 35, 126, 0.5);
+  outline-offset: 2px;
+}
+
+/* Touch Device Optimization */
+@media (hover: none) {
+  .reg020-submit-button:hover {
+    transform: none;
+  }
+  
+  .reg020-register-container:hover {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .reg020-grants-registration-page {
+    background: none;
+    padding: 0;
+  }
+
+  .reg020-register-container {
+    box-shadow: none;
+    padding: 2rem;
   }
 }
