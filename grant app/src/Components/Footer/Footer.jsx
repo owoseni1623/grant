@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FaFacebook,
@@ -6,12 +6,21 @@ import {
   FaLinkedin,
   FaInstagram,
   FaEnvelope,
-  FaPhone
+  FaPhone,
+  FaUserCog
 } from 'react-icons/fa';
 import './Footer.css';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if admin is authenticated when component mounts
+  useEffect(() => {
+    // Check for admin token in localStorage
+    const adminToken = localStorage.getItem('adminToken');
+    setIsAdmin(!!adminToken); // Convert to boolean (true if token exists, false otherwise)
+  }, []);
 
   return (
     <footer className="platform-footer">
@@ -24,6 +33,13 @@ const Footer = () => {
             <li><Link to="/resources">Resources</Link></li>
             <li><Link to="/about">About Us</Link></li>
             <li><Link to="/news">Latest News</Link></li>
+            {isAdmin && (
+              <li className="admin-link">
+                <Link to="/admin">
+                  <FaUserCog /> Admin Panel
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -89,6 +105,9 @@ const Footer = () => {
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
           <Link to="/sitemap">Sitemap</Link>
+          {isAdmin && (
+            <Link to="/admin" className="admin-link">Admin</Link>
+          )}
         </div>
       </div>
     </footer>
