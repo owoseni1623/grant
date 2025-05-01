@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import API_CONFIG from '../../config';
 import axios from 'axios';
 import './AdminPanel.css';
 import { Eye, EyeOff, Check, X, UserCheck, Download, Search, RefreshCw } from 'lucide-react';
@@ -37,7 +38,7 @@ const AdminPanel = () => {
     const token = localStorage.getItem('adminToken');
     if (token) {
       // Verify token with backend
-      axios.get('https://grant-api.onrender.com/api/admin/verify-token', {
+      axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_VERIFY}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(response => {
@@ -65,7 +66,7 @@ const AdminPanel = () => {
   const fetchApplications = async (token) => {
     setIsLoading(true);
     try {
-      const response = await axios.get('https://grant-api.onrender.com/api/admin/applications', {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_APPLICATIONS}`, {
         headers: { 'Authorization': `Bearer ${token || localStorage.getItem('adminToken')}` }
       });
       
@@ -90,7 +91,7 @@ const AdminPanel = () => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post('https://grant-api.onrender.com/api/admin/login', credentials);
+      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_LOGIN}`, credentials);
       localStorage.setItem('adminToken', response.data.token);
       setIsAuthenticated(true);
       fetchApplications(response.data.token);
@@ -124,7 +125,7 @@ const AdminPanel = () => {
     setIsUpdating(true);
     try {
       const response = await axios.put(
-        `https://grant-api.onrender.com/api/admin/applications/${applicationId}/status`,
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_APPLICATIONS}/${applicationId}/status`,
         { status: newStatus },
         { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }
       );
@@ -277,7 +278,7 @@ const AdminPanel = () => {
   const handleDownloadDocument = async (documentPath, documentType) => {
     try {
       const response = await axios.get(
-        `https://grant-api.onrender.com/api/admin/documents/${encodeURIComponent(documentPath)}`,
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_DOCUMENTS}/${encodeURIComponent(documentPath)}`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
           responseType: 'blob'
