@@ -1,0 +1,210 @@
+:root {
+    /* Advanced Color Palette */
+    --sit01-sitemap-color-primary: #1a5f7a;
+    --sit01-sitemap-color-secondary: #2c8eb3;
+    --sit01-sitemap-color-accent: #4ecdc4;
+    --sit01-sitemap-color-background-light: #f9fafb;
+    --sit01-sitemap-color-background-dark: #e9ecef;
+    --sit01-sitemap-color-text-primary: #2c3e50;
+    --sit01-sitemap-color-text-secondary: #34495e;
+    --sit01-sitemap-color-border: #d1d8e0;
+
+    /* Typography */
+    --sit01-sitemap-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    /* Sophisticated Transitions */
+    --sit01-sitemap-transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --sit01-sitemap-transition-speed-fast: 0.2s;
+    --sit01-sitemap-transition-speed-medium: 0.3s;
+}
+
+.sit01-sitemap-page * {
+    box-sizing: border-box;
+}
+
+.sit01-sitemap-page {
+    max-width: 1400px;
+    margin: 2rem auto;
+    background-color: white;
+    margin-top: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 5px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    font-family: var(--sit01-sitemap-font-primary);
+    color: var(--sit01-sitemap-color-text-primary);
+    line-height: 1.6;
+}
+
+.sit01-sitemap-header {
+    background: linear-gradient(135deg, var(--sit01-sitemap-color-primary) 0%, var(--sit01-sitemap-color-secondary) 100%);
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+}
+
+.sit01-sitemap-header h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    letter-spacing: -1px;
+}
+
+.sit01-sitemap-search {
+    padding: 2rem;
+    background-color: var(--sit01-sitemap-color-background-dark);
+}
+
+.sit01-sitemap-search input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--sit01-sitemap-color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all var(--sit01-sitemap-transition-speed-fast) ease;
+}
+
+.sit01-sitemap-search input:focus {
+    outline: none;
+    border-color: var(--sit01-sitemap-color-secondary);
+    box-shadow: 0 0 0 3px rgba(44, 142, 179, 0.2);
+}
+
+.sit01-sitemap-quick-nav {
+    padding: 1rem 2rem;
+    background-color: var(--sit01-sitemap-color-background-light);
+}
+
+.sit01-quick-nav-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.sit01-quick-nav-grid button {
+    background-color: var(--sit01-sitemap-color-background-dark);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all var(--sit01-sitemap-transition-speed-medium) ease;
+}
+
+.sit01-quick-nav-grid button.active,
+.sit01-quick-nav-grid button:hover {
+    background-color: var(--sit01-sitemap-color-secondary);
+    color: white;
+}
+
+.sit01-sitemap-content {
+    padding: 2rem;
+}
+
+.sit01-sitemap-category {
+    margin-bottom: 2rem;
+    border: 1px solid var(--sit01-sitemap-color-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sit01-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background-color: var(--sit01-sitemap-color-background-dark);
+    cursor: pointer;
+}
+
+.sit01-category-pages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.sit01-page-item {
+    background-color: var(--sit01-sitemap-color-background-light);
+    padding: 1rem;
+    border-radius: 8px;
+    transition: transform var(--sit01-sitemap-transition-speed-fast) ease;
+}
+
+.sit01-page-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.sit01-page-title {
+    font-weight: bold;
+    color: var(--sit01-sitemap-color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.sit01-page-path {
+    color: var(--sit01-sitemap-color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.sit01-page-description {
+    color: var(--sit01-sitemap-color-text-secondary);
+    font-size: 0.8rem;
+}
+
+.sit01-sitemap-summary {
+    background-color: var(--sit01-sitemap-color-background-dark);
+    padding: 2rem;
+    text-align: center;
+}
+
+.sit01-summary-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+}
+
+.sit01-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sit01-stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--sit01-sitemap-color-primary);
+}
+
+.sit01-stat-label {
+    color: #194d33;
+}
+
+.sit01-sitemap-footer {
+    background-color: var(--sit01-sitemap-color-primary);
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.sit01-footer-links a {
+    color: white;
+    margin: 0 1rem;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity var(--sit01-sitemap-transition-speed-fast) ease;
+}
+
+.sit01-footer-links a:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .sit01-sitemap-page {
+        margin: 1rem;
+    }
+
+    .sit01-category-pages {
+        grid-template-columns: 1fr;
+    }
+}

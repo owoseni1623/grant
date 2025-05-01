@@ -1,0 +1,625 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+:root {
+  /* Comprehensive Color Palette */
+  --primary-color: #2563eb;
+  --primary-color-light: #3b82f6;
+  --secondary-color: #10b981;
+  --secondary-color-light: #34d399;
+  --background-light: #f3f4f6;
+  --background-dark: #1f2937;
+  --text-dark: #111827;
+  --text-light: #f9fafb;
+  --accent-color: #6366f1;
+  --accent-color-light: #818cf8;
+  --white: #ffffff;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  
+  /* Shadows and Elevations */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Global Reset and Base Styles */
+.real-estate-grant-page {
+  font-family: var(--font-family-base);
+  line-height: 1.6;
+  color: var(--text-dark);
+  background-color: var(--background-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Responsive Typography */
+.real-estate-grant-page h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-light);
+}
+
+.real-estate-grant-page h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.real-estate-grant-page h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 100px;
+  height: 4px;
+  background: var(--primary-color);
+  transform: translateX(-50%);
+}
+
+/* Hero Section Enhanced */
+.hero001 {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--white);
+  padding: clamp(3rem, 10vw, 6rem) 1rem;
+  text-align: center;
+  margin-top: 3rem;
+  position: relative;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.hero001::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1), transparent 50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  margin: 0 auto;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.9);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.hero-content001 {
+  position: relative;
+  z-index: 2;
+}
+
+/* CTA Group Styling */
+.cta-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 10;  /* Add this to ensure buttons are clickable */
+}
+
+.primary-cta, .secondary-cta {
+  display: inline-flex;  /* Changed to inline-flex */
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: center;
+  cursor: pointer;  /* Add this to show pointer cursor */
+  position: relative;  /* Add this for proper stacking */
+  z-index: 2;  /* Add this to ensure buttons are clickable */
+}
+
+.primary-cta {
+  background-color: var(--white);
+  color: var(--primary-color);
+  border: 2px solid var(--white);
+  pointer-events: auto;  /* Add this to ensure clickability */
+}
+
+.secondary-cta {
+  background-color: transparent;
+  color: var(--white);
+  border: 2px solid var(--white);
+  pointer-events: auto;  /* Add this to ensure clickability */
+}
+
+/* Grant Statistics with Advanced Styling */
+.grant-statistics {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.stat-block {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  min-width: 200px;
+  transition: transform 0.3s ease;
+}
+
+.stat-block:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.8);
+}
+
+/* Impact Zones Grid with Advanced Interactions */
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.impact-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.impact-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.impact-card:hover::before {
+  opacity: 1;
+}
+
+.impact-card:hover {
+  transform: translateY(-15px);
+  box-shadow: var(--shadow-xl);
+}
+
+.impact-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+/* Application Workflow Styling */
+.application-workflow {
+  padding: 4rem 1rem;
+  background-color: var(--white);
+}
+
+.workflow-timeline {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.workflow-stage {
+  background: var(--background-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-number {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--primary-color);
+  color: var(--white);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Scroll to Top with Enhanced Styling */
+.scroll-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.scroll-top:hover {
+  background: var(--primary-color-light);
+  transform: translateY(-10px) scale(1.1);
+}
+
+.scroll-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive Breakpoints */
+@media screen and (max-width: 768px) {
+  .hero001 {
+    padding: 2rem 1rem;
+  }
+
+  .grant-statistics {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stat-block {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .impact-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Accessibility and Performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .real-estate-grant-page {
+    background: white;
+    color: black;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /* Micro Mobile Devices */
+  .real-estate-grant-page {
+      padding: 0 10px;
+  }
+
+  .hero001 {
+      padding: 1rem 0.5rem;
+      text-align: center;
+  }
+
+  .hero-text-animation001 {
+      padding: 0 15px;
+  }
+
+  .hero001 h1 {
+      font-size: 1.8rem;
+      line-height: 1.3;
+  }
+
+  .hero-subtitle {
+      font-size: 0.9rem;
+  }
+
+  /* Grant Statistics for Mobile */
+  .grant-statistics {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+  }
+
+  .stat-block {
+      width: 100%;
+      max-width: 280px;
+      padding: 1rem;
+  }
+
+  .stat-number {
+      font-size: 2rem;
+  }
+
+  .stat-label {
+      font-size: 0.8rem;
+  }
+
+  /* CTA Group Mobile */
+  .cta-group {
+      flex-direction: column;
+      align-items: center;
+  }
+
+  .primary-cta, .secondary-cta {
+      width: 100%;
+      max-width: 300px;
+      margin: 0.5rem 0;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+  }
+
+  /* Impact Zones Mobile */
+  .impact-zones {
+      padding: 2rem 0.5rem;
+  }
+
+  .impact-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+  }
+
+  .impact-card {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+  }
+
+  .impact-icon {
+      font-size: 2.5rem;
+  }
+
+  /* Success Stories Mobile */
+  .stories-carousel {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+  }
+
+  .story-card {
+      max-width: 100%;
+      margin-bottom: 1rem;
+  }
+
+  .story-image img {
+      height: 200px;
+  }
+
+  /* FAQ Mobile */
+  .advanced-faq {
+      padding: 1rem 0.5rem;
+  }
+
+  .faq-item {
+      margin-bottom: 0.5rem;
+  }
+
+  .faq-header h3 {
+      font-size: 0.9rem;
+  }
+
+  /* Contact Support Mobile */
+  .support-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+  }
+
+  .support-card {
+      padding: 1rem;
+      text-align: center;
+  }
+
+  /* Final CTA Styling */
+/* .final-cta {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--white);
+  text-align: center;
+  padding: 4rem 1rem;
+} */
+
+.final-cta h2 {
+  margin-bottom: 1rem;
+}
+
+.final-cta p {
+  text: white;
+}
+
+.cta-button-011 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.primary-action-011, .secondary-action-011 {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.primary-action-011 {
+  background-color: var(--white);
+  color: var(--primary-color);
+  border: 2px solid var(--white);
+}
+
+.secondary-action-011 {
+  background-color: transparent;
+  color: var(--white);
+  border: 2px solid var(--white);
+}
+
+/* Hover effects */
+.primary-action-011:hover {
+  background-color: transparent;
+  color: var(--white);
+  border: 2px solid var(--white);
+}
+
+.secondary-action-011:hover {
+  background-color: var(--white);
+  color: var(--primary-color);
+}
+
+/* Active/Focus states */
+.primary-action-011:active,
+.primary-action-011:focus,
+.secondary-action-011:active,
+.secondary-action-011:focus {
+  transform: scale(0.95);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+  /* Scroll to Top Mobile */
+  .scroll-top {
+      width: 50px;
+      height: 50px;
+      bottom: 15px;
+      right: 15px;
+  }
+}
+
+/* Tablet Responsiveness */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+  .real-estate-grant-page {
+      padding: 0 20px;
+  }
+
+  .hero001 {
+      padding: 3rem 1rem;
+  }
+
+  .hero001 h1 {
+      font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+      font-size: 1.1rem;
+  }
+
+  .grant-statistics {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+  }
+
+  .stat-block {
+      flex-basis: calc(33% - 1.5rem);
+      max-width: 250px;
+  }
+
+  .impact-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+  }
+
+  .stories-carousel {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+  }
+
+  .support-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+  }
+
+  .cta-group {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+  }
+
+  .primary-cta, .secondary-cta {
+      flex-basis: calc(50% - 1rem);
+      max-width: 250px;
+  }
+}
+
+/* Large Tablet and Small Desktop Responsiveness */
+@media screen and (min-width: 1025px) and (max-width: 1440px) {
+  .real-estate-grant-page {
+      max-width: 1200px;
+      margin: 0 auto;
+  }
+
+  .impact-grid {
+      grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stories-carousel {
+      grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+      transition: none !important;
+      animation: none !important;
+  }
+}
+
+/* Orientation Support */
+@media screen and (max-height: 500px) {
+  .hero001 {
+      padding: 1rem;
+  }
+
+  .grant-statistics {
+      flex-direction: row;
+      overflow-x: auto;
+  }
+}
