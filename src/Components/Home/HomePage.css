@@ -1,0 +1,576 @@
+.usa-funding-homepage {
+    width: 100%;
+    overflow-x: hidden;
+    margin-top: 4rem;
+}
+  
+/* Hero Section */
+.hero-section {
+    max-height: 600px;
+    min-height: 400px;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/Images/grant0.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    padding-bottom: 6rem;
+    color: white;
+}
+  
+.hero-content {
+    max-width: 800px;
+}
+  
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: #1273de;
+}
+  
+.hero-content p {
+    font-size: 1.5rem;
+    line-height: 1.6;
+    color: #8ed1fc;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 0.5s ease-in-out;
+  }
+  
+  .hero-section {
+    position: relative;
+  }
+  
+  .hero-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 2;
+  }
+  
+  .hero-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.3s ease;
+  }
+  
+  .hero-dot.active {
+    background: white;
+  }
+  
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-nav-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  
+  .hero-nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    width: 60px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .hero-nav-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  .hero-nav-button.left {
+    left: 5px;
+  }
+  
+  .hero-nav-button.right {
+    right: 5px;
+  }
+  
+  .hero-nav-button svg {
+    width: 24px;
+    height: 24px;
+    color: #333;
+    pointer-events: none;
+  }
+
+  
+/* Category Icons Section */
+.category-icons-section {
+    /* padding: 2rem; */
+    margin-top: -160px;
+    width: 100%;
+}
+
+.category-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #FFCCBC;
+    font-size: 2rem;
+}
+  
+.categories-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+  
+.category-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    width: 120px;
+    height: 120px;
+}
+  
+.category-card:hover {
+    transform: translateY(-5px);
+}
+  
+.category-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+  
+.category-icon svg {
+    width: 40px;
+    height: 40px;
+    color: white;
+}
+  
+.category-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+  
+/* How It Works Section */
+.how-it-works-section {
+    padding: 4rem 2rem;
+    text-align: center;
+    background-color: #969696;
+}
+  
+.how-it-works-steps {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+}
+  
+.step-card {
+    flex: 1;
+    min-width: 250px;
+    max-width: 300px;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3498db;
+    border-radius: 50%;
+}
+
+.step-icon svg {
+    width: 35px;
+    height: 35px;
+    color: white;
+}
+
+.step-card h3 {
+    margin: 1rem 0;
+    color: #333;
+}
+
+.step-card p {
+    color: #666;
+    line-height: 1.6;
+}
+  
+/* Testimonials Section */
+.ome010-testimonials-section {
+    background-color: #f4f6f9;
+    padding: 5rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ome010-testimonials-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .ome010-section-title {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    font-weight: 700;
+    position: relative;
+  }
+  
+  .ome010-section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: #3498db;
+  }
+  
+  /* Testimonial Section */
+  .ome010-testimonials-carousel {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .ome010-testimonials-window {
+    width: 100%;
+    max-width: 1000px;
+    overflow: hidden;
+  }
+  
+  .ome010-testimonials-container {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    gap: 2rem;
+  }
+  
+  .ome010-testimonial-card {
+    flex: 0 0 calc(25% - 2rem);
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .ome010-testimonial-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  }
+  
+  .ome010-testimonial-card p {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+    font-style: italic;
+  }
+  
+  .ome010-testimonial-author {
+    color: #3498db;
+    font-weight: 600;
+    font-size: 0.8rem;
+    align-self: flex-end;
+  }
+  
+  .ome010-carousel-button {
+    background: none;
+    border: none;
+    color: #2c3e50;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0 1rem;
+    z-index: 10;
+  }
+  
+  .ome010-carousel-button:hover {
+    color: #3498db;
+  }
+  
+/* Money Sources Section */
+.money-sources-section {
+    padding: 4rem 2rem;
+    background-color: #CFD8DC;
+}
+  
+.content-flex {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+  
+.text-content {
+    flex: 1;
+}
+  
+.text-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #333;
+}
+
+.money-sources-paragraphs {
+    display: flex;
+    flex-direction: row;
+    gap: 3rem;
+}
+
+.money-source-p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #555;
+    text-align: justify;
+}
+  
+.cta-link {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 2rem;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+  
+.cta-link:hover {
+    background-color: #2980b9;
+}
+  
+/* Application Categories Section */
+.application-categories-section {
+    padding: 4rem 2rem;
+    background-color: #D7CCC8;
+}
+  
+.categories-header {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+}
+  
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+  
+.funding-category-card {
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+  
+.funding-category-card:hover {
+    transform: translateY(-5px);
+}
+  
+.category-icon-container {
+    font-size: 2.5rem;
+    color: #3498db;
+    margin-bottom: 1rem;
+}
+  
+/* Recent Applications Section */
+.recent-applications-section {
+    padding: 4rem 2rem;
+    background-color: #DCEDC8;
+    text-align: center;
+}
+  
+.application-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+  
+.application-stats p {
+    font-size: 1.2rem;
+}
+  
+.application-cta {
+    max-width: 800px;
+    margin: 3rem auto 0;
+}
+  
+.cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+  
+.cta-button {
+    padding: 1rem 2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+  
+.cta-button.primary {
+    background-color: #3498db;
+    color: white;
+}
+  
+.cta-button.secondary {
+    background-color: white;
+    color: #3498db;
+    border: 2px solid #3498db;
+}
+  
+.cta-button.primary:hover {
+    background-color: #2980b9;
+}
+  
+.cta-button.secondary:hover {
+    background-color: #f8f9fa;
+}
+  
+/* Responsive Design */
+
+@media (max-width: 1200px) {
+    .ome010-testimonial-card {
+      flex: 0 0 calc(33.333% - 2rem);
+    }
+  }
+  
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-content p {
+        font-size: 1.2rem;
+    }
+    
+    .category-card {
+        width: 150px;
+    }
+    
+    .application-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    /* .testimonial-card {
+        height: 180px;
+        width: 200px;
+    } */
+
+    .ome010-testimonial-card {
+        flex: 0 0 calc(50% - 2rem);
+      }
+
+    .money-sources-paragraphs {
+        gap: 1.5rem;
+    }
+
+    .money-source-p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+}
+  
+@media (max-width: 480px) {
+    .category-card {
+        width: 100%;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .carousel-button {
+        display: none;
+    }
+
+    .step-card {
+        min-width: 100%;
+    }
+    .ome010-testimonial-card {
+        flex: 0 0 100%;
+      }
+}

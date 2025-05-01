@@ -1,0 +1,458 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  /* Comprehensive Color Palette */
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --accent-color: #e74c3c;
+  --background-color: #f4f6f7;
+  --text-color-dark: #2c3e50;
+  --text-color-light: #ffffff;
+  --gradient-primary: linear-gradient(135deg, #3498db, #2980b9);
+  --gradient-secondary: linear-gradient(135deg, #2ecc71, #27ae60);
+  
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Responsive Typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+  
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  
+  /* Shadows */
+  --shadow-subtle: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --shadow-strong: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+/* Global Reset and Base Styles */
+.innovation-grants-page {
+  font-family: var(--font-primary);
+  line-height: 1.6;
+  color: var(--text-color-dark);
+  background-color: var(--background-color);
+  scroll-behavior: smooth;
+}
+
+.innovation-grants-page * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Hero Section */
+.hero-innovative {
+  position: relative;
+  background: var(--gradient-primary);
+  color: var(--text-color-light);
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  overflow: hidden;
+  margin-top: 4rem;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeInUp 1s ease-out;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.hero-text h1 {
+  font-size: clamp(var(--text-2xl), 6vw, var(--text-3xl));
+  margin-bottom: var(--space-md);
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero-subtitle {
+  font-size: clamp(var(--text-base), 3vw, var(--text-lg));
+  margin-bottom: var(--space-lg);
+  opacity: 0.9;
+}
+
+/* Hero Stats */
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
+}
+
+.stat {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.stat.animate {
+  opacity: 1;
+  transform: translateY(0);
+  animation: pulse 2s infinite;
+}
+
+.stat-number {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-color-light);
+}
+
+.stat-label {
+  display: block;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* CTA Buttons */
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.primary-btn, 
+.secondary-btn {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-lg);
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.primary-btn {
+  background-color: var(--text-color-light);
+  color: var(--primary-color);
+}
+
+.secondary-btn {
+  background-color: transparent;
+  color: var(--text-color-light);
+  border: 2px solid var(--text-color-light);
+}
+
+/* Innovation Focus Areas */
+.innovation-focus-areas {
+  padding: var(--space-xl) var(--space-md);
+  background-color: var(--text-color-light);
+  text-align: center;
+}
+
+.innovation-focus-areas h2 {
+  margin-bottom: var(--space-lg);
+  font-size: clamp(var(--text-xl), 5vw, var(--text-2xl));
+}
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-lg);
+}
+
+.focus-card {
+  background-color: var(--background-color);
+  padding: var(--space-lg);
+  border-radius: 15px;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.4s ease;
+}
+
+.focus-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-medium);
+}
+
+.focus-icon {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-md);
+}
+
+.focus-card h3 {
+  margin-bottom: var(--space-md);
+}
+
+.focus-card ul {
+  list-style-type: none;
+}
+
+.focus-card li {
+  margin-bottom: var(--space-xs);
+  opacity: 0.8;
+}
+
+/* Grant Mechanics */
+.grant-mechanics {
+  background-color: var(--background-color);
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+}
+
+.mechanics-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+}
+
+.timeline-stage {
+  background-color: var(--text-color-light);
+  padding: var(--space-lg);
+  border-radius: 15px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.stage-icon {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-md);
+}
+
+/* Success Stories */
+.success-stories-innovative {
+  background-color: var(--text-color-light);
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.stories-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.story-card {
+  background-color: var(--background-color);
+  border-radius: 15px;
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-subtle);
+}
+
+.story-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.grant-badge {
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 20px;
+  font-size: var(--text-xs);
+}
+
+.story-organization {
+  margin-bottom: var(--space-sm);
+  font-weight: 600;
+}
+
+.story-impact {
+  margin-bottom: var(--space-md);
+}
+
+.read-more {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* FAQ Section */
+.faq-section-innovative {
+  background-color: var(--background-color);
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+}
+
+.faq-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background-color: var(--text-color-light);
+  margin-bottom: var(--space-md);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-subtle);
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  cursor: pointer;
+}
+
+.faq-answer {
+  padding: var(--space-md);
+  background-color: var(--background-color);
+}
+
+.accordion-icon {
+  font-size: var(--text-lg);
+  transition: transform 0.3s ease;
+}
+
+.faq-item.active .accordion-icon {
+  transform: rotate(45deg);
+}
+
+/* Final CTA */
+.final-cta-innovative {
+  background: var(--gradient-secondary);
+  color: var(--text-color-light);
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.cta-content {
+    margin: 0 auto;
+}
+
+.final-cta-innovative h2 {
+  margin-bottom: var(--space-md);
+}
+
+.final-cta-innovative .cta-buttons {
+  margin-top: var(--space-lg);
+}
+
+.apply-btn, 
+.info-session-btn {
+  color: var(--primary-color);
+  background-color: var(--text-color-light);
+  padding: var(--space-sm) var(--space-lg);
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+}
+
+.info-session-btn {
+  background-color: transparent;
+  color: var(--text-color-light);
+  border: 2px solid var(--text-color-light);
+}
+
+/* Scroll to Top Button */
+.scroll-to-top {
+  position: fixed;
+  bottom: var(--space-md);
+  right: var(--space-md);
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: var(--text-lg);
+  cursor: pointer;
+  box-shadow: var(--shadow-medium);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.scroll-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 768px) {
+  .hero-stats,
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cta-buttons {
+    gap: var(--space-md);
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-text h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .focus-grid,
+  .mechanics-timeline,
+  .stories-carousel {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .hero-innovative,
+  .innovation-focus-areas,
+  .grant-mechanics,
+  .success-stories-innovative,
+  .faq-section-innovative,
+  .final-cta-innovative {
+    padding: var(--space-lg) var(--space-sm);
+  }
+
+  .focus-grid,
+  .mechanics-timeline,
+  .stories-carousel {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-stage,
+  .focus-card,
+  .story-card {
+    padding: var(--space-md);
+  }
+}
