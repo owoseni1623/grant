@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification, NotificationType } from '../../Context/NotificationContext';
 import { useUsGrantContext } from '../../Context/UsGrantContext';
+import { authService } from '../../services/authService';
 import { 
   FaUser, 
   FaLock, 
@@ -10,6 +11,7 @@ import {
   FaEyeSlash 
 } from 'react-icons/fa';
 import './LoginPage.css';
+import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +19,8 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
+  const [showDiagnostic, setShowDiagnostic] = useState(false); // State to toggle diagnostic tool
   const { addNotification } = useNotification();
 
   const { login, isAuthenticated } = useUsGrantContext();
@@ -32,18 +36,36 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setDebugInfo('');
     setIsLoading(true);
 
     try {
-      const success = await login(email, password, navigate);
-      if (success) {
+      setDebugInfo('Attempting direct service login...');
+      
+      // First try with direct service call
+      try {
+        const userData = await authService.login(email, password);
         addNotification('Login successful!', NotificationType.SUCCESS);
-      } else {
-        setError('Invalid credentials. Please try again.');
-        addNotification('Invalid credentials. Please try again.', NotificationType.ERROR);
+        setDebugInfo('Login successful via direct service');
+        login(userData); // Update context with user data
+        navigate('/');
+        return;
+      } catch (serviceErr) {
+        setDebugInfo(`Direct service login failed: ${serviceErr.message}`);
+        console.error('Direct service login failed:', serviceErr);
+        
+        // Fallback to context-based login
+        const success = await login(email, password);
+        if (success) {
+          addNotification('Login successful!', NotificationType.SUCCESS);
+          navigate('/');
+          return;
+        } else {
+          throw new Error('Context-based login returned false');
+        }
       }
     } catch (err) {
-      const errorMessage = err.message || 'An unexpected error occurred. Please try again later.';
+      const errorMessage = err.message || 'Invalid credentials. Please try again.';
       setError(errorMessage);
       addNotification(errorMessage, NotificationType.ERROR);
     } finally {
@@ -61,6 +83,7 @@ const LoginPage = () => {
         
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
+          {debugInfo && <div className="debug-info"><small>{debugInfo}</small></div>}
           
           <div className="form-group">
             <div className="input-wrapper">
@@ -71,7 +94,7 @@ const LoginPage = () => {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
-                placeholder="Email" 
+                placeholder="Email (e.g. odumala@gmail.com)" 
                 className="input-field"
               />
             </div>
@@ -135,8 +158,30 @@ const LoginPage = () => {
               </button>
             </div>
           </div>
+          
+          {/* Toggle button for diagnostic tool */}
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button 
+              type="button"
+              onClick={() => setShowDiagnostic(!showDiagnostic)}
+              style={{
+                background: 'none',
+                border: '1px solid #ccc',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: '#555'
+              }}
+            >
+              {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
+            </button>
+          </div>
         </form>
       </div>
+      
+      {/* Render the diagnostic tool conditionally */}
+      {showDiagnostic && <LoginDiagnostic />}
     </div>
   );
 };

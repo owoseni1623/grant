@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 import { useUsGrantContext } from '../../Context/UsGrantContext';
+import { authService } from '../../services/authService';
+import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -14,15 +16,21 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [showDiagnostic, setShowDiagnostic] = useState(false); // State to toggle diagnostic tool
   const navigate = useNavigate();
 
-  const { adminLogin, isAuthenticated, user } = useUsGrantContext();
+  const { adminLogin, isAuthenticated } = useUsGrantContext();
 
   useEffect(() => {
     // Check if already logged in as admin
-    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    if (isAuthenticated && userData.role === 'ADMIN') {
-      navigate('/admin/dashboard');
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      if (isAuthenticated && userData.role === 'ADMIN') {
+        console.log('Already logged in as admin, redirecting to dashboard');
+        navigate('/admin/dashboard');
+      }
+    } catch (e) {
+      console.error('Error checking admin status:', e);
     }
   }, [navigate, isAuthenticated]);
 
@@ -32,64 +40,6 @@ const AdminLogin = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const manualAdminLogin = async (email, password) => {
-    try {
-      setDebugInfo('Attempting manual admin login...');
-      
-      // Attempt with direct XMLHttpRequest for maximum control
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        // Update URL if needed based on your API structure
-        xhr.open('POST', 'https://grant-pi.vercel.app/api/auth/admin/login', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.withCredentials = true;
-        
-        xhr.onload = function() {
-          setDebugInfo(`XHR status: ${xhr.status}, Response: ${xhr.responseText.substring(0, 100)}`);
-          
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              
-              if (data.token) {
-                // Store token and user info
-                localStorage.setItem('token', data.token);
-                const userData = {
-                  id: data._id,
-                  firstName: data.firstName,
-                  lastName: data.lastName,
-                  email: data.email,
-                  role: data.role
-                };
-                localStorage.setItem('userData', JSON.stringify(userData));
-                
-                // Navigate to dashboard
-                navigate('/admin/dashboard');
-                resolve(true);
-              } else {
-                reject(new Error('No authentication token received'));
-              }
-            } catch (e) {
-              reject(new Error('Error parsing response: ' + e.message));
-            }
-          } else {
-            reject(new Error(`Server error: ${xhr.status} ${xhr.statusText}`));
-          }
-        };
-        
-        xhr.onerror = function() {
-          setDebugInfo('XHR network error occurred');
-          reject(new Error('Network error occurred'));
-        };
-        
-        xhr.send(JSON.stringify({ email, password }));
-      });
-    } catch (error) {
-      setDebugInfo(`Manual login error: ${error.message}`);
-      throw error;
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -107,35 +57,42 @@ const AdminLogin = () => {
     
     try {
       setLoading(true);
+      setDebugInfo('Attempting admin login with direct service call...');
       
-      // Try context-based admin login
       try {
-        // Use the adminLogin method from UsGrantContext
-        const success = await adminLogin(email, password, navigate);
+        // Use the updated authService directly
+        const userData = await authService.adminLogin(email, password);
+        
+        // Store admin session data
+        localStorage.setItem('userData', JSON.stringify({
+          ...userData,
+          role: 'ADMIN'
+        }));
+        
+        setSuccess('Login successful! Redirecting to admin dashboard...');
+        setDebugInfo('Login successful via direct service call');
+        navigate('/admin/dashboard');
+      } catch (serviceErr) {
+        // If direct service call fails
+        setDebugInfo(`Direct service call failed: ${serviceErr.message}`);
+        console.error('Admin login failed with direct service call:', serviceErr);
+        
+        // Fallback to context-based login
+        setDebugInfo('Trying context-based admin login...');
+        const success = await adminLogin(email, password);
         
         if (success) {
           setSuccess('Login successful! Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
           return;
-        }
-      } catch (contextError) {
-        setDebugInfo(`Context login failed: ${contextError.message}`);
-        console.error('Context admin login failed:', contextError);
-        
-        // If context login fails, try direct API call
-        try {
-          await manualAdminLogin(email, password);
-          setSuccess('Login successful! Redirecting to admin dashboard...');
-          return;
-        } catch (manualError) {
-          console.error('Manual admin login failed:', manualError);
-          throw new Error('Login failed after multiple attempts. Please check your credentials.');
+        } else {
+          throw new Error('Context-based login returned false');
         }
       }
-      
-      setError('Login failed. Please check your admin credentials.');
     } catch (err) {
-      console.error('Admin login error:', err);
-      setError(err.message || 'Login failed. Please check your admin credentials.');
+      console.error('Admin login failed:', err);
+      setDebugInfo(`Login failed: ${err.message}`);
+      setError('Login failed. Please verify your admin credentials.');
     } finally {
       setLoading(false);
     }
@@ -164,7 +121,7 @@ const AdminLogin = () => {
             </div>
           )}
           
-          {debugInfo && process.env.NODE_ENV === 'development' && (
+          {debugInfo && (
             <div className="admin-debug-message">
               <small>{debugInfo}</small>
             </div>
@@ -181,7 +138,7 @@ const AdminLogin = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="admin-input-field"
-                placeholder="admin@example.com"
+                placeholder="robert23@gmail.com"
                 required
               />
             </div>
@@ -229,12 +186,34 @@ const AdminLogin = () => {
           <div className="admin-note">
             <div className="admin-note-title">Note:</div>
             <div className="admin-note-content">
-              Use the admin email and password you registered with. For example: 
+              Admin credentials example:
               <span className="admin-credential-example"> robert23@gmail.com</span>
             </div>
           </div>
+          
+          {/* Toggle button for diagnostic tool */}
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button 
+              type="button"
+              onClick={() => setShowDiagnostic(!showDiagnostic)}
+              style={{
+                background: 'none',
+                border: '1px solid #ccc',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: '#555'
+              }}
+            >
+              {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
+            </button>
+          </div>
         </form>
       </div>
+      
+      {/* Render the diagnostic tool conditionally */}
+      {showDiagnostic && <LoginDiagnostic />}
     </div>
   );
 };
