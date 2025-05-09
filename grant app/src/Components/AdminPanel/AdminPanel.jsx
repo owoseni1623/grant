@@ -91,6 +91,7 @@ const AdminPanel = () => {
     setIsLoading(true);
     
     try {
+      // Use the admin-specific login endpoint
       const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_LOGIN}`, credentials);
       localStorage.setItem('adminToken', response.data.token);
       setIsAuthenticated(true);
