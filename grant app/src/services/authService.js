@@ -1,163 +1,164 @@
-import axios from 'axios';
+// Auth service for handling authentication operations
+const API_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
 
-// Always use the environment variable if available, otherwise use the default
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
-
-// Create axios instance with consistent configuration
-const api = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  timeout: 15000, // Increased timeout to 15 seconds
-});
-
-// Debugging interceptor
-api.interceptors.request.use(config => {
-  console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`, 
-    config.data ? JSON.stringify(config.data).substring(0, 100) + '...' : 'No data');
+// Helper function to handle response errors
+const handleResponse = async (response) => {
+  // Log response for debugging
+  console.log(`Response status: ${response.status} ${response.statusText}`);
   
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log('[API Request] Added token to request');
-  }
-  return config;
-}, error => {
-  console.error('[API Request Error]', error);
-  return Promise.reject(error);
-});
-
-api.interceptors.response.use(
-  response => {
-    console.log(`[API Response] ${response.status} from ${response.config.url}`, 
-      response.data ? 'Data received' : 'No data');
-    return response;
-  },
-  error => {
-    console.error('[API Response Error]', error.response ? {
-      status: error.response.status,
-      data: error.response.data,
-      url: error.config.url
-    } : error.message);
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type');
     
-    // Handle network errors
-    if (!error.response) {
-      return Promise.reject({ 
-        message: 'Network error. Please check your connection.' 
-      });
-    }
-    
-    // Handle 401 Unauthorized errors more gracefully
-    if (error.response.status === 401) {
-      console.log('Authentication error detected');
-      
-      // Only clear tokens when not on login/admin-login pages
-      const isLoginPage = window.location.pathname.includes('/login');
-      if (!isLoginPage) {
-        console.log('Clearing credentials due to 401 error');
-        localStorage.removeItem('token');
-        localStorage.removeItem('userData');
-        window.location.href = '/login';
+    // Check if the response is JSON
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error: ${response.status}`);
+      } catch (jsonError) {
+        // If JSON parsing fails, use text response
+        const errorText = await response.text();
+        throw new Error(errorText || `Request failed with status ${response.status}`);
       }
+    } else {
+      // If not JSON, get text directly
+      const errorText = await response.text();
+      throw new Error(errorText || `Request failed with status ${response.status}`);
     }
-    
-    return Promise.reject(error.response?.data || { message: error.message });
   }
-);
+  
+  // For successful responses, try to parse as JSON
+  try {
+    return await response.json();
+  } catch (e) {
+    // If there's no JSON body or parsing fails
+    return { success: true, message: 'Operation completed successfully' };
+  }
+};
 
-// Direct API calls with explicit error handling
+// Auth service object with authentication methods
 export const authService = {
-  login: async (email, password) => {
-    console.log('[authService] Attempting login for:', email);
+  // Login user
+  async login(email, password) {
+    console.log('AuthService: Attempting login to', `${API_URL}/auth/login`);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      });
       
-      if (response.data && response.data.token) {
-        console.log('[authService] Login successful, storing token');
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userData', JSON.stringify({
-          _id: response.data._id,
-          firstName: response.data.firstName,
-          lastName: response.data.lastName,
-          email: response.data.email,
-          role: response.data.role
-        }));
-        return response.data;
-      } else {
-        console.error('[authService] Login response missing token');
-        throw new Error('Invalid login response');
-      }
+      return await handleResponse(response);
     } catch (error) {
-      console.error('[authService] Login error:', error);
+      console.error('AuthService login error:', error);
       throw error;
     }
   },
   
-  adminLogin: async (email, password) => {
-    console.log('[authService] Attempting admin login for:', email);
+  // Admin login
+  async adminLogin(email, password) {
+    console.log('AuthService: Attempting admin login to', `${API_URL}/auth/admin/login`);
     try {
-      // Standardize on axios for consistency
-      const response = await api.post('/auth/admin/login', { email, password });
+      const response = await fetch(`${API_URL}/auth/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      });
       
-      if (response.data && response.data.token) {
-        console.log('[authService] Admin login successful, storing token');
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userData', JSON.stringify({
-          _id: response.data._id,
-          firstName: response.data.firstName,
-          lastName: response.data.lastName,
-          email: response.data.email,
-          role: response.data.role
-        }));
-        return response.data;
-      } else {
-        console.error('[authService] Admin login response missing token');
-        throw new Error('Invalid admin login response');
-      }
+      return await handleResponse(response);
     } catch (error) {
-      console.error('[authService] Admin login error:', error);
-      
-      // If we get a specific error message from the server, use it
-      const errorMessage = error.response?.data?.message || 'Admin login failed';
-      throw new Error(errorMessage);
+      console.error('AuthService admin login error:', error);
+      throw error;
     }
   },
   
-  logout: () => {
-    console.log('[authService] Performing logout');
+  // Register user
+  async register(userData) {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('AuthService register error:', error);
+      throw error;
+    }
+  },
+  
+  // Get user profile
+  async getUserProfile(token) {
+    try {
+      const response = await fetch(`${API_URL}/auth/profile`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('AuthService get profile error:', error);
+      throw error;
+    }
+  },
+  
+  // Forgot password
+  async forgotPassword(email) {
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('AuthService forgot password error:', error);
+      throw error;
+    }
+  },
+  
+  // Reset password
+  async resetPassword(token, password, confirmPassword) {
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, password, confirmPassword }),
+      });
+      
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('AuthService reset password error:', error);
+      throw error;
+    }
+  },
+  
+  // Logout - client side only
+  logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
   },
   
-  getCurrentUser: () => {
-    try {
-      return JSON.parse(localStorage.getItem('userData'));
-    } catch (e) {
-      console.error('[authService] Error parsing user data:', e);
-      return null;
-    }
-  },
-  
-  isAuthenticated: () => {
+  // Check if user is authenticated
+  isAuthenticated() {
     return !!localStorage.getItem('token');
-  },
-  
-  isAdmin: () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      return userData.role === 'ADMIN';
-    } catch (e) {
-      console.error('[authService] Error checking admin role:', e);
-      return false;
-    }
-  },
-  
-  getToken: () => {
-    return localStorage.getItem('token');
   }
 };
 
-export default api;
+export default authService;

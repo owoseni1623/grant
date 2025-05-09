@@ -1,279 +1,160 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
-/*
- * This is a diagnostic component to help troubleshoot login issues.
- * Add this to your app temporarily to help identify problems.
- * 
- * Usage:
- * Import and add <LoginDiagnostic /> to any page where you're having auth issues.
- */
 const LoginDiagnostic = () => {
-  const [result, setResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [method, setMethod] = useState('fetch');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [endpoint, setEndpoint] = useState('/auth/login');
-  const [apiBase, setApiBase] = useState(process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api');
+  const [diagnosticResults, setDiagnosticResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [apiUrl, setApiUrl] = useState(process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api');
 
-  const runTest = async () => {
-    setIsLoading(true);
-    setResult(null);
-    
-    try {
-      let response;
-      const url = `${apiBase}${endpoint}`;
-      const payload = { email, password };
-      const startTime = Date.now();
-      
-      if (method === 'fetch') {
-        response = await fetch(url, {
-          method: 'POST',
+  const runDiagnostic = async () => {
+    setLoading(true);
+    const results = {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'unknown',
+      apiUrl: apiUrl,
+      endpoints: {},
+      localStorage: {
+        token: localStorage.getItem('token') ? 'Present' : 'Not present',
+        userData: localStorage.getItem('userData') ? 'Present' : 'Not present',
+      },
+      cors: 'Testing...',
+      network: 'Testing...'
+    };
+
+    // Test API endpoints
+    const endpoints = [
+      { name: 'Login', path: '/auth/login', method: 'OPTIONS' },
+      { name: 'Admin Login', path: '/auth/admin/login', method: 'OPTIONS' },
+      { name: 'Profile', path: '/auth/profile', method: 'OPTIONS' },
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        // Use OPTIONS request to check if endpoint exists and which methods are allowed
+        const response = await fetch(`${apiUrl}${endpoint.path}`, {
+          method: endpoint.method,
           headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          credentials: 'include',
+            'Content-Type': 'application/json'
+          }
         });
         
-        const responseTime = Date.now() - startTime;
-        
-        const status = response.status;
-        const text = await response.text();
-        let data;
-        
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          data = { rawText: text };
-        }
-        
-        setResult({
-          success: status >= 200 && status < 300,
-          status,
-          responseTime,
-          data,
-          headers: {
-            'content-type': response.headers.get('content-type'),
-          },
-        });
-      } else if (method === 'axios') {
-        response = await axios.post(url, payload, {
-          withCredentials: true,
-        });
-        
-        const responseTime = Date.now() - startTime;
-        
-        setResult({
-          success: true,
+        const allowedMethods = response.headers.get('Allow') || 
+                              response.headers.get('Access-Control-Allow-Methods');
+                              
+        results.endpoints[endpoint.name] = {
           status: response.status,
-          responseTime,
-          data: response.data,
-          headers: response.headers,
-        });
-      } else if (method === 'xhr') {
-        const xhr = new XMLHttpRequest();
-        
-        response = await new Promise((resolve, reject) => {
-          xhr.open('POST', url);
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.withCredentials = true;
-          
-          xhr.onload = function() {
-            const responseTime = Date.now() - startTime;
-            let data;
-            
-            try {
-              data = JSON.parse(xhr.responseText);
-            } catch (e) {
-              data = { rawText: xhr.responseText };
-            }
-            
-            resolve({
-              success: xhr.status >= 200 && xhr.status < 300,
-              status: xhr.status,
-              responseTime,
-              data,
-              statusText: xhr.statusText,
-              headers: {
-                'content-type': xhr.getResponseHeader('content-type'),
-              },
-            });
-          };
-          
-          xhr.onerror = function() {
-            const responseTime = Date.now() - startTime;
-            reject({
-              success: false,
-              status: xhr.status,
-              responseTime,
-              statusText: xhr.statusText,
-              error: 'Network error',
-            });
-          };
-          
-          xhr.send(JSON.stringify(payload));
-        });
-        
-        setResult(response);
+          statusText: response.statusText,
+          allowedMethods: allowedMethods || 'Not specified',
+          ok: response.ok
+        };
+      } catch (error) {
+        results.endpoints[endpoint.name] = {
+          error: error.message,
+          ok: false
+        };
       }
-    } catch (error) {
-      setResult({
-        success: false,
-        error: error.message,
-        stack: error.stack,
-        data: error.response?.data,
-        status: error.response?.status,
-      });
-    } finally {
-      setIsLoading(false);
     }
+
+    // Test simple CORS request
+    try {
+      const corsResponse = await fetch(apiUrl, {
+        method: 'HEAD'
+      });
+      results.cors = {
+        status: corsResponse.status,
+        corsHeaders: {
+          'Access-Control-Allow-Origin': corsResponse.headers.get('Access-Control-Allow-Origin') || 'Not set',
+          'Access-Control-Allow-Methods': corsResponse.headers.get('Access-Control-Allow-Methods') || 'Not set',
+          'Access-Control-Allow-Headers': corsResponse.headers.get('Access-Control-Allow-Headers') || 'Not set'
+        }
+      };
+    } catch (error) {
+      results.cors = {
+        error: error.message
+      };
+    }
+
+    // Test general network connectivity
+    try {
+      const start = Date.now();
+      await fetch('https://www.google.com', { mode: 'no-cors' });
+      const end = Date.now();
+      results.network = {
+        status: 'Connected',
+        pingTime: `${end - start}ms`
+      };
+    } catch (error) {
+      results.network = {
+        status: 'Disconnected',
+        error: error.message
+      };
+    }
+
+    setDiagnosticResults(results);
+    setLoading(false);
   };
 
   return (
     <div style={{ 
-      maxWidth: '800px', 
-      margin: '20px auto', 
-      padding: '20px', 
-      border: '1px solid #ccc', 
+      padding: '15px', 
+      margin: '15px 0', 
+      border: '1px solid #ccc',
       borderRadius: '8px',
-      backgroundColor: '#f9f9f9'
+      backgroundColor: '#f8f9fa',
+      fontSize: '14px'
     }}>
-      <h2>Login Diagnostic Tool</h2>
-      <p><i>Use this to troubleshoot API connection issues</i></p>
+      <h3 style={{ marginTop: 0 }}>API Connection Diagnostic</h3>
       
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>API Base URL:</label>
-        <input 
-          type="text" 
-          value={apiBase} 
-          onChange={(e) => setApiBase(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        />
+      <div style={{ marginBottom: '10px' }}>
+        <label>
+          API URL:
+          <input 
+            type="text" 
+            value={apiUrl} 
+            onChange={(e) => setApiUrl(e.target.value)}
+            style={{ 
+              width: '100%',
+              padding: '5px',
+              margin: '5px 0',
+              borderRadius: '4px',
+              border: '1px solid #ccc'
+            }}
+          />
+        </label>
       </div>
       
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Endpoint:</label>
-        <input 
-          type="text" 
-          value={endpoint} 
-          onChange={(e) => setEndpoint(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Email:</label>
-        <input 
-          type="email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Password:</label>
-        <input 
-          type="password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Request Method:</label>
-        <select 
-          value={method} 
-          onChange={(e) => setMethod(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        >
-          <option value="fetch">Fetch API</option>
-          <option value="axios">Axios</option>
-          <option value="xhr">XMLHttpRequest</option>
-        </select>
-      </div>
-      
-      <button 
-        onClick={runTest} 
-        disabled={isLoading}
+      <button
+        onClick={runDiagnostic}
+        disabled={loading}
         style={{
-          padding: '10px 15px',
-          backgroundColor: '#4285f4',
+          padding: '8px 15px',
+          backgroundColor: '#007bff',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: isLoading ? 'wait' : 'pointer',
-          fontWeight: 'bold',
-          marginBottom: '20px'
+          cursor: loading ? 'not-allowed' : 'pointer'
         }}
       >
-        {isLoading ? 'Testing...' : 'Run Test'}
+        {loading ? 'Running Diagnosis...' : 'Run API Diagnostic'}
       </button>
       
-      {result && (
-        <div style={{
-          marginTop: '20px',
-          padding: '15px',
-          border: `1px solid ${result.success ? '#4caf50' : '#f44336'}`,
-          backgroundColor: `${result.success ? '#e8f5e9' : '#ffebee'}`,
-          borderRadius: '4px'
-        }}>
-          <h3>Results</h3>
-          <div style={{ marginBottom: '10px' }}>
-            <strong>Status:</strong> {result.status} {result.statusText && `(${result.statusText})`}
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <strong>Success:</strong> {result.success ? 'Yes' : 'No'}
-          </div>
-          {result.responseTime && (
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Response Time:</strong> {result.responseTime}ms
-            </div>
-          )}
-          {result.error && (
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Error:</strong> {result.error}
-            </div>
-          )}
-          {result.headers && (
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Headers:</strong>
-              <pre style={{ 
-                backgroundColor: '#f1f1f1', 
-                padding: '8px', 
-                borderRadius: '4px',
-                overflow: 'auto'
-              }}>
-                {JSON.stringify(result.headers, null, 2)}
-              </pre>
-            </div>
-          )}
-          <div>
-            <strong>Response Data:</strong>
-            <pre style={{ 
-              backgroundColor: '#f1f1f1', 
-              padding: '8px', 
-              borderRadius: '4px',
-              overflow: 'auto', 
-              maxHeight: '300px' 
-            }}>
-              {JSON.stringify(result.data, null, 2)}
-            </pre>
-          </div>
+      {diagnosticResults && (
+        <div style={{ marginTop: '15px' }}>
+          <h4>Diagnostic Results</h4>
+          <pre style={{ 
+            backgroundColor: '#f1f1f1', 
+            padding: '10px', 
+            borderRadius: '4px',
+            overflowX: 'auto',
+            fontSize: '12px'
+          }}>
+            {JSON.stringify(diagnosticResults, null, 2)}
+          </pre>
         </div>
       )}
       
-      <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
-        <p>Diagnostic information:</p>
-        <ul>
-          <li>Environment: {process.env.NODE_ENV}</li>
-          <li>Browser: {navigator.userAgent}</li>
-          <li>Cookies enabled: {navigator.cookieEnabled.toString()}</li>
-          <li>Default API URL: {process.env.REACT_APP_API_URL || 'Not set'}</li>
-        </ul>
+      <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+        <p>If you're seeing 405 errors, your API endpoints might not support the requested methods.</p>
+        <p>Check that your backend routes are correctly configured.</p>
       </div>
     </div>
   );

@@ -18,12 +18,15 @@ export const UsGrantProvider = ({ children }) => {
   const [error, setError] = useState(null);
   
   // Get base API URL from environment or use the default
+  // IMPORTANT FIX: Ensure the API URL doesn't have a trailing slash
   const API_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
 
   // Login function with enhanced error handling
   const login = async (email, password, navigate) => {
     setError(null);
     try {
+      console.log('Attempting login to:', `${API_URL}/auth/login`);
+      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -33,21 +36,27 @@ export const UsGrantProvider = ({ children }) => {
         credentials: 'include', // Include cookies
       });
 
+      // Log the status before processing
+      console.log('Login response status:', response.status);
+
       // Handle non-OK responses
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          // If we can't parse as JSON, use the text itself
-          throw new Error(errorText || 'Login failed');
+        const contentType = response.headers.get('content-type');
+        
+        // Check if the response is JSON
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        } else {
+          // If not JSON, get text
+          const errorText = await response.text();
+          throw new Error(errorText || `Login failed with status ${response.status}`);
         }
-        throw new Error(errorData.message || 'Login failed');
       }
 
       // Parse successful response
       const data = await response.json();
+      console.log('Login successful, received data:', data);
 
       if (data.token) {
         // Store token and user info
@@ -76,63 +85,62 @@ export const UsGrantProvider = ({ children }) => {
     }
   };
 
-  // Admin login function - UPDATED to fix the issue
+  // Admin login function - UPDATED to handle different response types
   const adminLogin = async (email, password, navigate) => {
     setError(null);
     try {
-      // Changed to use XMLHttpRequest to troubleshoot fetch issues
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${API_URL}/auth/admin/login`, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.withCredentials = true;
-        
-        xhr.onload = function() {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              
-              if (data.token) {
-                // Store token and user info
-                localStorage.setItem('token', data.token);
-                const userData = {
-                  id: data._id,
-                  firstName: data.firstName,
-                  lastName: data.lastName,
-                  email: data.email,
-                  role: data.role
-                };
-                localStorage.setItem('userData', JSON.stringify(userData));
-                setUser(userData);
-                setIsAuthenticated(true);
-                
-                // Navigate if navigate function is provided
-                navigateToPage(navigate, '/admin/dashboard');
-                resolve(true);
-              } else {
-                setError('No authentication token received');
-                resolve(false);
-              }
-            } catch (e) {
-              setError('Error parsing response');
-              console.error('Parse error:', e);
-              resolve(false);
-            }
-          } else {
-            setError('Admin login failed: ' + xhr.status + ' ' + xhr.statusText);
-            console.error('Admin login error:', xhr.status, xhr.statusText, xhr.responseText);
-            resolve(false);
-          }
-        };
-        
-        xhr.onerror = function() {
-          setError('Network error occurred during admin login');
-          console.error('Network error:', xhr);
-          resolve(false);
-        };
-        
-        xhr.send(JSON.stringify({ email, password }));
+      console.log('Attempting admin login to:', `${API_URL}/auth/admin/login`);
+      
+      const response = await fetch(`${API_URL}/auth/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include', // Include cookies
       });
+      
+      console.log('Admin login response status:', response.status);
+      
+      // Handle non-OK responses
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        
+        // Check if the response is JSON
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Admin login failed');
+        } else {
+          // If not JSON, get text
+          const errorText = await response.text();
+          throw new Error(errorText || `Admin login failed with status ${response.status}`);
+        }
+      }
+      
+      // Parse successful response
+      const data = await response.json();
+      console.log('Admin login successful, received data:', data);
+      
+      if (data.token) {
+        // Store token and user info
+        localStorage.setItem('token', data.token);
+        const userData = {
+          id: data._id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          role: data.role
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        // Navigate if navigate function is provided
+        navigateToPage(navigate, '/admin/dashboard');
+        return true;
+      } else {
+        throw new Error('No authentication token received');
+      }
     } catch (error) {
       console.error('Admin login error:', error);
       setError(error.message || 'An unexpected error occurred');
@@ -177,6 +185,7 @@ export const UsGrantProvider = ({ children }) => {
       });
       setIsAuthenticated(true);
     } catch (error) {
+      console.error('Token validation error:', error);
       // Remove token and reset authentication
       localStorage.removeItem('token');
       localStorage.removeItem('userData');
@@ -199,9 +208,16 @@ export const UsGrantProvider = ({ children }) => {
         body: JSON.stringify({ email }),
       });
 
+      // Handle non-OK responses with better error handling
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send reset link');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to send reset link');
+        } else {
+          const errorText = await response.text();
+          throw new Error(errorText || `Failed with status ${response.status}`);
+        }
       }
 
       const data = await response.json();
@@ -232,9 +248,16 @@ export const UsGrantProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
+      // Better error handling for non-OK responses
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Registration failed');
+        } else {
+          const errorText = await response.text();
+          throw new Error(errorText || `Registration failed with status ${response.status}`);
+        }
       }
 
       const data = await response.json();
@@ -271,7 +294,7 @@ export const UsGrantProvider = ({ children }) => {
     loading,
     error,
     login,
-    adminLogin, // Add the admin login function
+    adminLogin,
     logout,
     resetPassword,
     signUp,
