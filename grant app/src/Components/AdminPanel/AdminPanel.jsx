@@ -1,725 +1,708 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import API_CONFIG from '../../config';
-import axios from 'axios';
+import { 
+  Search, Filter, Eye, CheckCircle, XCircle, Clock, 
+  ArrowLeft, ArrowRight, RefreshCw, FileText, Download, 
+  User, Briefcase, Home, DollarSign, AlertCircle
+} from 'lucide-react';
 import './AdminPanel.css';
-import { Eye, EyeOff, Check, X, UserCheck, Download, Search, RefreshCw } from 'lucide-react';
 
 const AdminPanel = () => {
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loginError, setLoginError] = useState('');
-  
-  // Admin credentials
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  });
-  
-  // Application data
   const [applications, setApplications] = useState([]);
-  const [filteredApplications, setFilteredApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'detail'
-  const [isUpdating, setIsUpdating] = useState(false);
-  
-  // Filters and search
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [dateFilter, setDateFilter] = useState('ALL');
-  const [showSSN, setShowSSN] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
-  
-  const navigate = useNavigate();
+  const [filters, setFilters] = useState({
+    status: '',
+    fundingType: '',
+    searchTerm: ''
+  });
+  const [sorting, setSorting] = useState({
+    field: 'createdAt',
+    direction: 'desc'
+  });
 
-  // Check if admin is already authenticated
+  const applicationsPerPage = 10;
+
+  // Fetch all applications
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      // Verify token with backend
-      axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_VERIFY}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(response => {
-        if (response.data.valid) {
-          setIsAuthenticated(true);
-          fetchApplications(token);
-        } else {
-          localStorage.removeItem('adminToken');
-          setIsAuthenticated(false);
+    const fetchApplications = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/applications', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch applications');
         }
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Auth verification error:', error);
-        localStorage.removeItem('adminToken');
-        setIsAuthenticated(false);
-        setIsLoading(false);
-      });
-    } else {
-      setIsLoading(false);
-    }
+
+        const data = await response.json();
+        setApplications(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
   }, []);
 
-  // Fetch applications from API
-  const fetchApplications = async (token) => {
-    setIsLoading(true);
+  // Fetch single application details
+  const fetchApplicationDetails = async (id) => {
     try {
-      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_APPLICATIONS}`, {
-        headers: { 'Authorization': `Bearer ${token || localStorage.getItem('adminToken')}` }
+      setLoading(true);
+      const response = await fetch(`/api/applications/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
       });
-      
-      setApplications(response.data);
-      applyFilters(response.data, searchTerm, statusFilter, dateFilter);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-      if (error.response && error.response.status === 401) {
-        // Handle unauthorized
-        localStorage.removeItem('adminToken');
-        setIsAuthenticated(false);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch application details');
       }
-      setIsLoading(false);
+
+      const data = await response.json();
+      setSelectedApplication(data);
+      setViewMode('detail');
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
     }
   };
 
-  // Handle admin login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoginError('');
-    setIsLoading(true);
-    
+  // Update application status
+  const updateApplicationStatus = async (id, status) => {
     try {
-      // Use the admin-specific login endpoint
-      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_LOGIN}`, credentials);
-      localStorage.setItem('adminToken', response.data.token);
-      setIsAuthenticated(true);
-      fetchApplications(response.data.token);
-    } catch (error) {
-      console.error('Login error:', error);
-      setLoginError(error.response?.data?.message || 'Login failed. Please check your credentials.');
-      setIsLoading(false);
-    }
-  };
+      setLoading(true);
+      const response = await fetch(`/api/applications/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({ status })
+      });
 
-  // Handle admin logout
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    setIsAuthenticated(false);
-    setApplications([]);
-    setSelectedApplication(null);
-    setViewMode('list');
-  };
+      if (!response.ok) {
+        throw new Error('Failed to update application status');
+      }
 
-  // Handle input changes for login form
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setCredentials(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle application status update
-  const updateApplicationStatus = async (applicationId, newStatus) => {
-    setIsUpdating(true);
-    try {
-      const response = await axios.put(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_APPLICATIONS}/${applicationId}/status`,
-        { status: newStatus },
-        { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }
-      );
+      const updatedApp = await response.json();
       
-      // Update local state
-      if (selectedApplication && selectedApplication._id === applicationId) {
-        setSelectedApplication(prev => ({
-          ...prev,
-          status: newStatus
-        }));
+      // Update in the list
+      setApplications(applications.map(app => 
+        app._id === id ? { ...app, status: status } : app
+      ));
+      
+      // Update selected application if we're viewing it
+      if (selectedApplication && selectedApplication._id === id) {
+        setSelectedApplication({
+          ...selectedApplication,
+          status: status,
+          statusHistory: [
+            ...(selectedApplication.statusHistory || []),
+            { status, changedAt: new Date() }
+          ]
+        });
       }
       
-      // Update in the applications list
-      setApplications(prev => 
-        prev.map(app => 
-          app._id === applicationId ? { ...app, status: newStatus } : app
-        )
-      );
-      
-      // Also update filtered applications
-      setFilteredApplications(prev => 
-        prev.map(app => 
-          app._id === applicationId ? { ...app, status: newStatus } : app
-        )
-      );
-      
-      alert(`Application status updated to ${newStatus}`);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update application status');
-    } finally {
-      setIsUpdating(false);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
     }
   };
 
-  // Filter and search applications
-  const applyFilters = (apps, search, status, date) => {
-    let filtered = [...apps];
+  // Filter applications
+  const filteredApplications = applications.filter(app => {
+    // Status filter
+    if (filters.status && app.status !== filters.status) {
+      return false;
+    }
     
-    // Apply search term
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(app => 
+    // Funding type filter
+    if (filters.fundingType && app.fundingInfo.fundingType !== filters.fundingType) {
+      return false;
+    }
+    
+    // Search term
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      return (
         app.personalInfo.firstName.toLowerCase().includes(searchLower) ||
         app.personalInfo.lastName.toLowerCase().includes(searchLower) ||
         app.personalInfo.email.toLowerCase().includes(searchLower) ||
-        app._id.toLowerCase().includes(searchLower) ||
-        app.personalInfo.ssn.includes(search)
+        (app.addressInfo.city && app.addressInfo.city.toLowerCase().includes(searchLower)) ||
+        (app.fundingInfo.fundingPurpose && app.fundingInfo.fundingPurpose.toLowerCase().includes(searchLower))
       );
     }
     
-    // Apply status filter
-    if (status !== 'ALL') {
-      filtered = filtered.filter(app => app.status === status);
+    return true;
+  });
+
+  // Sort applications
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    let fieldA, fieldB;
+    
+    // Handle nested fields
+    if (sorting.field === 'name') {
+      fieldA = `${a.personalInfo.firstName} ${a.personalInfo.lastName}`.toLowerCase();
+      fieldB = `${b.personalInfo.firstName} ${b.personalInfo.lastName}`.toLowerCase();
+    } else if (sorting.field === 'fundingAmount') {
+      fieldA = a.fundingInfo.fundingAmount;
+      fieldB = b.fundingInfo.fundingAmount;
+    } else if (sorting.field === 'fundingType') {
+      fieldA = a.fundingInfo.fundingType;
+      fieldB = b.fundingInfo.fundingType;
+    } else {
+      fieldA = a[sorting.field];
+      fieldB = b[sorting.field];
     }
     
-    // Apply date filter
-    if (date !== 'ALL') {
-      const now = new Date();
-      const today = new Date(now.setHours(0, 0, 0, 0));
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const lastWeek = new Date(today);
-      lastWeek.setDate(lastWeek.getDate() - 7);
-      const lastMonth = new Date(today);
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      
-      filtered = filtered.filter(app => {
-        const appDate = new Date(app.createdAt);
-        switch (date) {
-          case 'TODAY':
-            return appDate >= today;
-          case 'YESTERDAY':
-            return appDate >= yesterday && appDate < today;
-          case 'LAST_WEEK':
-            return appDate >= lastWeek;
-          case 'LAST_MONTH':
-            return appDate >= lastMonth;
-          default:
-            return true;
-        }
-      });
+    if (sorting.direction === 'asc') {
+      return fieldA > fieldB ? 1 : -1;
+    } else {
+      return fieldA < fieldB ? 1 : -1;
     }
-    
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue, bValue;
-      
-      // Extract the values to compare based on the sort key
-      switch (sortConfig.key) {
-        case 'name':
-          aValue = `${a.personalInfo.firstName} ${a.personalInfo.lastName}`.toLowerCase();
-          bValue = `${b.personalInfo.firstName} ${b.personalInfo.lastName}`.toLowerCase();
-          break;
-        case 'email':
-          aValue = a.personalInfo.email.toLowerCase();
-          bValue = b.personalInfo.email.toLowerCase();
-          break;
-        case 'fundingAmount':
-          aValue = a.fundingInfo.fundingAmount;
-          bValue = b.fundingInfo.fundingAmount;
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'createdAt':
-        default:
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-      }
-      
-      // Compare the values based on the sort direction
-      if (sortConfig.direction === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+  });
+
+  // Pagination
+  const indexOfLastApplication = currentPage * applicationsPerPage;
+  const indexOfFirstApplication = indexOfLastApplication - applicationsPerPage;
+  const currentApplications = sortedApplications.slice(indexOfFirstApplication, indexOfLastApplication);
+  const totalPages = Math.ceil(sortedApplications.length / applicationsPerPage);
+
+  // Handle page change
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Format date
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-    
-    setFilteredApplications(filtered);
   };
 
-  // Handle search and filter changes
-  useEffect(() => {
-    applyFilters(applications, searchTerm, statusFilter, dateFilter);
-  }, [searchTerm, statusFilter, dateFilter, sortConfig]);
-
-  // Handle view application details
-  const viewApplicationDetails = (application) => {
-    setSelectedApplication(application);
-    setViewMode('detail');
+  // Get status badge
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return <span className="status-badge pending"><Clock size={16} /> Pending</span>;
+      case 'APPROVED':
+        return <span className="status-badge approved"><CheckCircle size={16} /> Approved</span>;
+      case 'REJECTED':
+        return <span className="status-badge rejected"><XCircle size={16} /> Rejected</span>;
+      default:
+        return <span className="status-badge">{status}</span>;
+    }
   };
 
-  // Handle back to list view
+  // Handle filter changes
+  const handleFilterChange = (name, value) => {
+    setFilters({
+      ...filters,
+      [name]: value
+    });
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    setSorting({
+      field,
+      direction: sorting.field === field && sorting.direction === 'asc' ? 'desc' : 'asc'
+    });
+  };
+
+  // Handle search
+  const handleSearch = (e) => {
+    handleFilterChange('searchTerm', e.target.value);
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setFilters({
+      status: '',
+      fundingType: '',
+      searchTerm: ''
+    });
+    setSorting({
+      field: 'createdAt',
+      direction: 'desc'
+    });
+    setCurrentPage(1);
+  };
+
+  // Go back to list view
   const backToList = () => {
-    setSelectedApplication(null);
     setViewMode('list');
+    setSelectedApplication(null);
   };
 
-  // Format SSN for display
-  const formatSSN = (ssn) => {
-    if (!showSSN) {
-      return 'XXX-XX-' + ssn.slice(-4);
-    }
-    return ssn;
-  };
+  // Get unique funding types for filter
+  const fundingTypes = [...new Set(applications.map(app => app.fundingInfo.fundingType))];
 
-  // Handle requesting ID documents download
-  const handleDownloadDocument = async (documentPath, documentType) => {
-    try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_DOCUMENTS}/${encodeURIComponent(documentPath)}`,
-        {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-          responseType: 'blob'
-        }
-      );
-      
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      const filename = documentPath.split('/').pop();
-      link.setAttribute('download', `${documentType}-${filename}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      alert('Failed to download document');
-    }
-  };
-
-  // Handle sorting change
-  const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Get the sort indicator for table header
-  const getSortIndicator = (key) => {
-    if (sortConfig.key === key) {
-      return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
-    }
-    return '';
-  };
-
-  // Render login form if not authenticated
-  if (!isAuthenticated && !isLoading) {
-    return (
-      <div className="admin-login-container">
-        <div className="admin-login-card">
-          <h2>Admin Login</h2>
-          <form onSubmit={handleLogin}>
-            {loginError && <div className="login-error">{loginError}</div>}
-            <div className="admin-form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={credentials.username}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="admin-form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <button type="submit" className="admin-login-btn" disabled={isLoading}>
-              {isLoading ? 'Logging In...' : 'Login'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state
-  if (isLoading) {
+  if (loading && !applications.length) {
     return (
       <div className="admin-loading">
-        <RefreshCw className="loading-icon" size={40} />
-        <p>Loading...</p>
+        <RefreshCw className="spin" />
+        <p>Loading applications...</p>
       </div>
     );
   }
 
-  // Render applications list view
-  if (viewMode === 'list') {
+  if (error && !applications.length) {
     return (
-      <div className="admin-panel-container">
-        <div className="admin-header">
-          <h1>Grant Applications Admin Panel</h1>
-          <button className="admin-logout-btn" onClick={handleLogout}>Logout</button>
+      <div className="admin-error">
+        <AlertCircle size={24} />
+        <p>Error: {error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-panel">
+      <header className="admin-header">
+        <h1>Grant Applications Admin Panel</h1>
+        <div className="admin-stats">
+          <div className="stat-box">
+            <h4>Total</h4>
+            <p>{applications.length}</p>
+          </div>
+          <div className="stat-box pending">
+            <h4>Pending</h4>
+            <p>{applications.filter(app => app.status === 'PENDING').length}</p>
+          </div>
+          <div className="stat-box approved">
+            <h4>Approved</h4>
+            <p>{applications.filter(app => app.status === 'APPROVED').length}</p>
+          </div>
+          <div className="stat-box rejected">
+            <h4>Rejected</h4>
+            <p>{applications.filter(app => app.status === 'REJECTED').length}</p>
+          </div>
         </div>
-        
-        <div className="admin-controls">
-          <div className="admin-search">
-            <div className="search-input-wrapper">
+      </header>
+
+      {viewMode === 'list' ? (
+        <>
+          <div className="filter-bar">
+            <div className="search-box">
               <Search size={18} />
               <input
                 type="text"
-                placeholder="Search by name, email, ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search applications..."
+                value={filters.searchTerm}
+                onChange={handleSearch}
               />
             </div>
-          </div>
-          
-          <div className="admin-filters">
-            <div className="filter-group">
-              <label>Status:</label>
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
+            
+            <div className="filter-select">
+              <Filter size={18} />
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
               >
-                <option value="ALL">All Statuses</option>
+                <option value="">All Statuses</option>
                 <option value="PENDING">Pending</option>
                 <option value="APPROVED">Approved</option>
                 <option value="REJECTED">Rejected</option>
               </select>
             </div>
             
-            <div className="filter-group">
-              <label>Date:</label>
-              <select 
-                value={dateFilter} 
-                onChange={(e) => setDateFilter(e.target.value)}
+            <div className="filter-select">
+              <DollarSign size={18} />
+              <select
+                value={filters.fundingType}
+                onChange={(e) => handleFilterChange('fundingType', e.target.value)}
               >
-                <option value="ALL">All Time</option>
-                <option value="TODAY">Today</option>
-                <option value="YESTERDAY">Yesterday</option>
-                <option value="LAST_WEEK">Last 7 Days</option>
-                <option value="LAST_MONTH">Last 30 Days</option>
+                <option value="">All Funding Types</option>
+                {fundingTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </select>
             </div>
             
-            <button 
-              className="refresh-btn"
-              onClick={() => fetchApplications()}
-              disabled={isLoading}
-            >
-              <RefreshCw size={16} />
-              Refresh
+            <button className="btn-reset" onClick={resetFilters}>
+              Reset Filters
             </button>
           </div>
-        </div>
-        
-        {filteredApplications.length === 0 ? (
-          <div className="no-applications">
-            <p>No applications found matching your filters.</p>
-          </div>
-        ) : (
+
           <div className="applications-table-container">
             <table className="applications-table">
               <thead>
                 <tr>
-                  <th onClick={() => requestSort('name')}>
-                    Applicant Name{getSortIndicator('name')}
+                  <th onClick={() => handleSort('createdAt')}>
+                    Date
+                    {sorting.field === 'createdAt' && (
+                      <span className="sort-arrow">
+                        {sorting.direction === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
                   </th>
-                  <th onClick={() => requestSort('email')}>
-                    Email{getSortIndicator('email')}
+                  <th onClick={() => handleSort('name')}>
+                    Name
+                    {sorting.field === 'name' && (
+                      <span className="sort-arrow">
+                        {sorting.direction === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
                   </th>
-                  <th onClick={() => requestSort('fundingAmount')}>
-                    Amount{getSortIndicator('fundingAmount')}
+                  <th onClick={() => handleSort('fundingType')}>
+                    Funding Type
+                    {sorting.field === 'fundingType' && (
+                      <span className="sort-arrow">
+                        {sorting.direction === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
                   </th>
-                  <th>Funding Type</th>
-                  <th onClick={() => requestSort('status')}>
-                    Status{getSortIndicator('status')}
+                  <th onClick={() => handleSort('fundingAmount')}>
+                    Amount
+                    {sorting.field === 'fundingAmount' && (
+                      <span className="sort-arrow">
+                        {sorting.direction === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
                   </th>
-                  <th onClick={() => requestSort('createdAt')}>
-                    Date{getSortIndicator('createdAt')}
-                  </th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.map((application) => (
-                  <tr key={application._id} className={`status-${application.status.toLowerCase()}`}>
-                    <td>
-                      {application.personalInfo.firstName} {application.personalInfo.lastName}
-                    </td>
-                    <td>{application.personalInfo.email}</td>
-                    <td>${application.fundingInfo.fundingAmount.toLocaleString()}</td>
-                    <td>{application.fundingInfo.fundingType}</td>
-                    <td>
-                      <span className={`status-badge ${application.status.toLowerCase()}`}>
-                        {application.status}
-                      </span>
-                    </td>
-                    <td>{new Date(application.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <button 
-                        className="action-btn view"
-                        onClick={() => viewApplicationDetails(application)}
-                      >
-                        <Eye size={16} />
-                        View
-                      </button>
+                {currentApplications.length > 0 ? (
+                  currentApplications.map((application) => (
+                    <tr key={application._id}>
+                      <td>{formatDate(application.createdAt)}</td>
+                      <td>
+                        {application.personalInfo.firstName} {application.personalInfo.lastName}
+                      </td>
+                      <td>{application.fundingInfo.fundingType}</td>
+                      <td>${application.fundingInfo.fundingAmount.toLocaleString()}</td>
+                      <td>{getStatusBadge(application.status)}</td>
+                      <td>
+                        <button 
+                          className="btn-view" 
+                          onClick={() => fetchApplicationDetails(application._id)}
+                        >
+                          <Eye size={16} /> View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="no-results">
+                      No applications found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
-        )}
-        
-        <div className="admin-footer">
-          <p>Showing {filteredApplications.length} of {applications.length} applications</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Render application detail view
-  return (
-    <div className="admin-panel-container">
-      <div className="admin-header">
-        <div className="header-with-back">
-          <button className="back-btn" onClick={backToList}>
-            ← Back to List
-          </button>
-          <h1>Application Details</h1>
-        </div>
-        <button className="admin-logout-btn" onClick={handleLogout}>Logout</button>
-      </div>
-      
-      {selectedApplication && (
-        <div className="application-details">
-          <div className="detail-header">
-            <div className="applicant-summary">
-              <h2>
-                {selectedApplication.personalInfo.firstName} {selectedApplication.personalInfo.lastName}
-              </h2>
-              <span className={`status-badge ${selectedApplication.status.toLowerCase()}`}>
-                {selectedApplication.status}
+
+          {sortedApplications.length > applicationsPerPage && (
+            <div className="pagination">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              
+              <span className="pagination-info">
+                Page {currentPage} of {totalPages}
               </span>
+              
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="pagination-button"
+              >
+                <ArrowRight size={16} />
+              </button>
             </div>
-            
-            <div className="detail-actions">
-              {selectedApplication.status === 'PENDING' && (
-                <>
-                  <button 
-                    className="action-btn approve"
+          )}
+        </>
+      ) : (
+        selectedApplication && (
+          <div className="application-detail">
+            <div className="detail-header">
+              <button onClick={backToList} className="btn-back">
+                <ArrowLeft size={16} /> Back to List
+              </button>
+              
+              <div className="application-id">
+                <FileText size={16} />
+                <span>Application ID: {selectedApplication._id}</span>
+              </div>
+              
+              <div className="status-actions">
+                <div className="current-status">
+                  Current Status: {getStatusBadge(selectedApplication.status)}
+                </div>
+                
+                <div className="status-buttons">
+                  <button
+                    className={`btn-status approve ${selectedApplication.status === 'APPROVED' ? 'active' : ''}`}
                     onClick={() => updateApplicationStatus(selectedApplication._id, 'APPROVED')}
-                    disabled={isUpdating}
+                    disabled={selectedApplication.status === 'APPROVED'}
                   >
-                    <Check size={16} />
-                    Approve
+                    <CheckCircle size={16} /> Approve
                   </button>
-                  <button 
-                    className="action-btn reject"
+                  
+                  <button
+                    className={`btn-status reject ${selectedApplication.status === 'REJECTED' ? 'active' : ''}`}
                     onClick={() => updateApplicationStatus(selectedApplication._id, 'REJECTED')}
-                    disabled={isUpdating}
+                    disabled={selectedApplication.status === 'REJECTED'}
                   >
-                    <X size={16} />
-                    Reject
+                    <XCircle size={16} /> Reject
                   </button>
-                </>
-              )}
-              {selectedApplication.status === 'APPROVED' && (
-                <button 
-                  className="action-btn reject"
-                  onClick={() => updateApplicationStatus(selectedApplication._id, 'REJECTED')}
-                  disabled={isUpdating}
-                >
-                  <X size={16} />
-                  Reject
-                </button>
-              )}
-              {selectedApplication.status === 'REJECTED' && (
-                <button 
-                  className="action-btn approve"
-                  onClick={() => updateApplicationStatus(selectedApplication._id, 'APPROVED')}
-                  disabled={isUpdating}
-                >
-                  <Check size={16} />
-                  Approve
-                </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="application-content">
+              <div className="detail-section">
+                <h3><User size={18} /> Personal Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="field-label">Full Name:</span>
+                    <span className="field-value">
+                      {selectedApplication.personalInfo.firstName} {selectedApplication.personalInfo.lastName}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Email:</span>
+                    <span className="field-value">{selectedApplication.personalInfo.email}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Phone:</span>
+                    <span className="field-value">{selectedApplication.personalInfo.phoneNumber}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Date of Birth:</span>
+                    <span className="field-value">
+                      {new Date(selectedApplication.personalInfo.dateOfBirth).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">SSN:</span>
+                    <span className="field-value">{selectedApplication.personalInfo.ssn}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Gender:</span>
+                    <span className="field-value">{selectedApplication.personalInfo.gender || 'Not specified'}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Ethnicity:</span>
+                    <span className="field-value">{selectedApplication.personalInfo.ethnicity || 'Not specified'}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Facebook Email:</span>
+                    <span className="field-value">{selectedApplication.facebookEmail || 'Not provided'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-section">
+                <h3><Briefcase size={18} /> Employment Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="field-label">Employment Status:</span>
+                    <span className="field-value">
+                      {selectedApplication.employmentInfo.employmentStatus || 'Not specified'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Income Level:</span>
+                    <span className="field-value">
+                      {selectedApplication.employmentInfo.incomeLevel || 'Not specified'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Education Level:</span>
+                    <span className="field-value">
+                      {selectedApplication.employmentInfo.educationLevel || 'Not specified'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Citizenship Status:</span>
+                    <span className="field-value">
+                      {selectedApplication.employmentInfo.citizenshipStatus || 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-section">
+                <h3><Home size={18} /> Address Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="field-label">Street Address:</span>
+                    <span className="field-value">{selectedApplication.addressInfo.streetAddress}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">City:</span>
+                    <span className="field-value">{selectedApplication.addressInfo.city}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">State:</span>
+                    <span className="field-value">{selectedApplication.addressInfo.state}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">ZIP Code:</span>
+                    <span className="field-value">{selectedApplication.addressInfo.zip}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-section">
+                <h3><DollarSign size={18} /> Funding Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="field-label">Funding Type:</span>
+                    <span className="field-value">{selectedApplication.fundingInfo.fundingType}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Amount Requested:</span>
+                    <span className="field-value">${selectedApplication.fundingInfo.fundingAmount.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Timeframe:</span>
+                    <span className="field-value">{selectedApplication.fundingInfo.timeframe}</span>
+                  </div>
+                  
+                  <div className="detail-item full-width">
+                    <span className="field-label">Purpose:</span>
+                    <div className="long-text-value">{selectedApplication.fundingInfo.fundingPurpose}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-section">
+                <h3>ID Verification Documents</h3>
+                <div className="document-images">
+                  <div className="document-image">
+                    <h4>ID Front Side</h4>
+                    {selectedApplication.documents.idCardFront ? (
+                      <div className="image-container">
+                        <img 
+                          src={`/uploads/${selectedApplication.documents.idCardFront.split('/').pop()}`} 
+                          alt="ID Card Front" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/placeholder-id.png';
+                          }}
+                        />
+                        <a 
+                          href={`/uploads/${selectedApplication.documents.idCardFront.split('/').pop()}`} 
+                          download
+                          className="download-link"
+                        >
+                          <Download size={16} /> Download
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="no-document">No front ID image provided</div>
+                    )}
+                  </div>
+                  
+                  <div className="document-image">
+                    <h4>ID Back Side</h4>
+                    {selectedApplication.documents.idCardBack ? (
+                      <div className="image-container">
+                        <img 
+                          src={`/uploads/${selectedApplication.documents.idCardBack.split('/').pop()}`} 
+                          alt="ID Card Back" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/placeholder-id.png';
+                          }}
+                        />
+                        <a 
+                          href={`/uploads/${selectedApplication.documents.idCardBack.split('/').pop()}`} 
+                          download
+                          className="download-link"
+                        >
+                          <Download size={16} /> Download
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="no-document">No back ID image provided</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="detail-section">
+                <h3>Additional Information</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="field-label">Agrees to Communication:</span>
+                    <span className="field-value">
+                      {selectedApplication.agreeToCommunication ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Terms Accepted:</span>
+                    <span className="field-value">
+                      {selectedApplication.termsAccepted ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className="field-label">Application Date:</span>
+                    <span className="field-value">{formatDate(selectedApplication.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedApplication.statusHistory && selectedApplication.statusHistory.length > 0 && (
+                <div className="detail-section">
+                  <h3>Status History</h3>
+                  <div className="status-history">
+                    {selectedApplication.statusHistory.map((history, index) => (
+                      <div key={index} className="history-item">
+                        <div className={`status-circle ${history.status.toLowerCase()}`}></div>
+                        <div className="history-details">
+                          <div className="history-status">{history.status}</div>
+                          <div className="history-date">{formatDate(history.changedAt)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-          
-          <div className="detail-sections">
-            <div className="detail-section">
-              <h3>Personal Information</h3>
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>Full Name:</label>
-                  <span>{selectedApplication.personalInfo.firstName} {selectedApplication.personalInfo.lastName}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Email:</label>
-                  <span>{selectedApplication.personalInfo.email}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Phone:</label>
-                  <span>{selectedApplication.personalInfo.phoneNumber}</span>
-                </div>
-                <div className="detail-item ssn-item">
-                  <label>SSN:</label>
-                  <span>{formatSSN(selectedApplication.personalInfo.ssn)}</span>
-                  <button 
-                    className="toggle-visibility-btn"
-                    onClick={() => setShowSSN(!showSSN)}
-                    aria-label={showSSN ? "Hide SSN" : "Show SSN"}
-                  >
-                    {showSSN ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <div className="detail-item">
-                  <label>Date of Birth:</label>
-                  <span>{new Date(selectedApplication.personalInfo.dateOfBirth).toLocaleDateString()}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Gender:</label>
-                  <span>{selectedApplication.personalInfo.gender || 'Not specified'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Ethnicity:</label>
-                  <span>{selectedApplication.personalInfo.ethnicity || 'Not specified'}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="detail-section">
-              <h3>Employment Information</h3>
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>Employment Status:</label>
-                  <span>{selectedApplication.employmentInfo.employmentStatus || 'Not specified'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Income Level:</label>
-                  <span>{selectedApplication.employmentInfo.incomeLevel || 'Not specified'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Education Level:</label>
-                  <span>{selectedApplication.employmentInfo.educationLevel || 'Not specified'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Citizenship Status:</label>
-                  <span>{selectedApplication.employmentInfo.citizenshipStatus || 'Not specified'}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="detail-section">
-              <h3>Address Information</h3>
-              <div className="detail-grid">
-                <div className="detail-item full-width">
-                  <label>Street Address:</label>
-                  <span>{selectedApplication.addressInfo.streetAddress}</span>
-                </div>
-                <div className="detail-item">
-                  <label>City:</label>
-                  <span>{selectedApplication.addressInfo.city}</span>
-                </div>
-                <div className="detail-item">
-                  <label>State:</label>
-                  <span>{selectedApplication.addressInfo.state}</span>
-                </div>
-                <div className="detail-item">
-                  <label>ZIP Code:</label>
-                  <span>{selectedApplication.addressInfo.zip}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="detail-section">
-              <h3>Funding Information</h3>
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>Funding Type:</label>
-                  <span>{selectedApplication.fundingInfo.fundingType}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Amount Requested:</label>
-                  <span>${selectedApplication.fundingInfo.fundingAmount.toLocaleString()}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Timeframe:</label>
-                  <span>{selectedApplication.fundingInfo.timeframe || 'Not specified'}</span>
-                </div>
-                <div className="detail-item full-width">
-                  <label>Funding Purpose:</label>
-                  <p className="purpose-text">{selectedApplication.fundingInfo.fundingPurpose}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="detail-section">
-              <h3>ID Verification Documents</h3>
-              <div className="documents-grid">
-                <div className="document-item">
-                  <h4>ID Card - Front</h4>
-                  <button
-                    className="document-download-btn"
-                    onClick={() => handleDownloadDocument(selectedApplication.documents.idCardFront, 'id-front')}
-                  >
-                    <Download size={16} />
-                    Download Document
-                  </button>
-                </div>
-                <div className="document-item">
-                  <h4>ID Card - Back</h4>
-                  <button
-                    className="document-download-btn"
-                    onClick={() => handleDownloadDocument(selectedApplication.documents.idCardBack, 'id-back')}
-                  >
-                    <Download size={16} />
-                    Download Document
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="detail-section">
-              <h3>Additional Information</h3>
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>Application Date:</label>
-                  <span>{new Date(selectedApplication.createdAt).toLocaleString()}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Application ID:</label>
-                  <span>{selectedApplication._id}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Agreed to Communication:</label>
-                  <span>{selectedApplication.agreeToCommunication ? 'Yes' : 'No'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Terms Accepted:</label>
-                  <span>{selectedApplication.termsAccepted ? 'Yes' : 'No'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )
       )}
     </div>
   );
