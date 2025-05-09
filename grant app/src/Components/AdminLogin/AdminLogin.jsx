@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
-import { authService } from '../../services/authService';
+import { useUsGrantContext } from '../../Context/UsGrantContext';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -15,12 +15,15 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  const { adminLogin, isAuthenticated, user } = useUsGrantContext();
+
   useEffect(() => {
     // Check if already logged in as admin
-    if (authService.isAuthenticated() && authService.isAdmin()) {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    if (isAuthenticated && userData.role === 'ADMIN') {
       navigate('/admin/dashboard');
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,16 +48,13 @@ const AdminLogin = () => {
     try {
       setLoading(true);
       
-      // Important: Use the adminLogin method instead of the regular login
-      const data = await authService.adminLogin(email, password);
+      // Use the adminLogin method from UsGrantContext
+      const success = await adminLogin(email, password, navigate);
       
-      if (data.token) {
+      if (success) {
         setSuccess('Login successful! Redirecting to admin dashboard...');
-        
-        // Short delay before redirect for better UX
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 1500);
+      } else {
+        setError('Login failed. Please check your admin credentials.');
       }
     } catch (err) {
       console.error('Admin login error:', err);

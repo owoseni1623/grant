@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification, NotificationType } from '../../Context/NotificationContext';
 import { useUsGrantContext } from '../../Context/UsGrantContext';
@@ -19,8 +19,15 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { addNotification } = useNotification();
 
-  const { login } = useUsGrantContext();
+  const { login, isAuthenticated } = useUsGrantContext();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect if already logged in
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +43,7 @@ const LoginPage = () => {
         addNotification('Invalid credentials. Please try again.', NotificationType.ERROR);
       }
     } catch (err) {
-      const errorMessage = 'An unexpected error occurred. Please try again later.';
+      const errorMessage = err.message || 'An unexpected error occurred. Please try again later.';
       setError(errorMessage);
       addNotification(errorMessage, NotificationType.ERROR);
     } finally {

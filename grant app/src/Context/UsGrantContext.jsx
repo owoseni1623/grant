@@ -16,49 +16,126 @@ export const UsGrantProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get base API URL from environment or use the default
+  const API_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
 
   // Login function with enhanced error handling
   const login = async (email, password, navigate) => {
     setError(null);
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Include cookies
       });
 
+      // Handle non-OK responses
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          // If we can't parse as JSON, use the text itself
+          throw new Error(errorText || 'Login failed');
+        }
+        throw new Error(errorData.message || 'Login failed');
+      }
+
+      // Parse successful response
       const data = await response.json();
 
-      if (response.ok) {
+      if (data.token) {
         // Store token and user info
-        localStorage.setItem('userToken', data.token);
-        setUser({
+        localStorage.setItem('token', data.token);
+        const userData = {
           id: data._id,
           firstName: data.firstName,
           lastName: data.lastName,
-          email: data.email
-        });
+          email: data.email,
+          role: data.role
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        setUser(userData);
         setIsAuthenticated(true);
 
         // Navigate if navigate function is provided
         navigateToPage(navigate, '/');
         return true;
       } else {
-        setError(data.message || 'Login failed');
-        return false;
+        throw new Error('No authentication token received');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('An unexpected error occurred');
+      setError(error.message || 'An unexpected error occurred');
+      return false;
+    }
+  };
+
+  // Admin login function
+  const adminLogin = async (email, password, navigate) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/auth/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include', // Include cookies
+      });
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          // If we can't parse as JSON, use the text itself
+          throw new Error(errorText || 'Admin login failed');
+        }
+        throw new Error(errorData.message || 'Admin login failed');
+      }
+
+      // Parse successful response
+      const data = await response.json();
+
+      if (data.token) {
+        // Store token and user info
+        localStorage.setItem('token', data.token);
+        const userData = {
+          id: data._id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          role: data.role
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        // Navigate if navigate function is provided
+        navigateToPage(navigate, '/admin/dashboard');
+        return true;
+      } else {
+        throw new Error('No authentication token received');
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setError(error.message || 'An unexpected error occurred');
       return false;
     }
   };
 
   // Logout function
   const logout = (navigate) => {
-    localStorage.removeItem('userToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     setUser(null);
     setIsAuthenticated(false);
 
@@ -69,29 +146,32 @@ export const UsGrantProvider = ({ children }) => {
   // Token validation
   const validateToken = async (token) => {
     try {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(`${API_URL}/auth/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include', // Include cookies
       });
+
+      if (!response.ok) {
+        throw new Error('Token invalid');
+      }
 
       const data = await response.json();
 
-      if (response.ok) {
-        setUser({
-          id: data._id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email
-        });
-        setIsAuthenticated(true);
-      } else {
-        throw new Error('Token invalid');
-      }
+      setUser({
+        id: data._id,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role
+      });
+      setIsAuthenticated(true);
     } catch (error) {
       // Remove token and reset authentication
-      localStorage.removeItem('userToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userData');
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -103,7 +183,7 @@ export const UsGrantProvider = ({ children }) => {
   const resetPassword = async (email) => {
     setError(null);
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,26 +191,23 @@ export const UsGrantProvider = ({ children }) => {
         body: JSON.stringify({ email }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send reset link');
+      }
+
       const data = await response.json();
 
-      if (response.ok) {
-        return {
-          success: true,
-          message: 'Password reset link sent to your email',
-        };
-      } else {
-        setError(data.message || 'Failed to send reset link');
-        return {
-          success: false,
-          message: data.message || 'Failed to send reset link',
-        };
-      }
+      return {
+        success: true,
+        message: data.message || 'Password reset link sent to your email',
+      };
     } catch (error) {
       console.error('Password reset error:', error);
-      setError('An unexpected error occurred');
+      setError(error.message || 'An unexpected error occurred');
       return {
         success: false,
-        message: 'An unexpected error occurred',
+        message: error.message || 'An unexpected error occurred',
       };
     }
   };
@@ -139,7 +216,7 @@ export const UsGrantProvider = ({ children }) => {
   const signUp = async (userData, navigate) => {
     setError(null);
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,34 +224,31 @@ export const UsGrantProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
       const data = await response.json();
 
-      if (response.ok) {
-        // Navigate to login after successful registration
-        navigateToPage(navigate, '/login');
-        return {
-          success: true,
-          message: 'Account created successfully',
-        };
-      } else {
-        setError(data.message || 'Registration failed');
-        return {
-          success: false,
-          message: data.message || 'Registration failed',
-        };
-      }
+      // Navigate to login after successful registration
+      navigateToPage(navigate, '/login');
+      return {
+        success: true,
+        message: data.message || 'Account created successfully',
+      };
     } catch (error) {
-      setError('An unexpected error occurred');
+      setError(error.message || 'An unexpected error occurred');
       return {
         success: false,
-        message: 'An unexpected error occurred',
+        message: error.message || 'An unexpected error occurred',
       };
     }
   };
 
   // Check authentication on initial load
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('token');
     if (token) {
       validateToken(token);
     } else {
@@ -189,6 +263,7 @@ export const UsGrantProvider = ({ children }) => {
     loading,
     error,
     login,
+    adminLogin, // Add the admin login function
     logout,
     resetPassword,
     signUp,

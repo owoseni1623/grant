@@ -1,13 +1,12 @@
 import axios from 'axios';
 
-// Determine the base URL based on the environment
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://grant-api.onrender.com'  // Update this with your production API URL
-  : '/api'; // For local development with proxy
+// Update the base URL to match your actual API endpoint
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
 
 // Create axios instance with base URL
 const api = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true, // Add this to handle cookies properly
 });
 
 // Add auth token to every request
@@ -41,7 +40,8 @@ export const authService = {
   // Regular user login
   login: async (email, password) => {
     try {
-      const response = await api.post('/auth/admin/login', { email, password });
+      // Update endpoint to match your actual API route
+      const response = await api.post('/auth/login', { email, password });
       
       if (response.data.token) {
         // Store token and user data
@@ -65,6 +65,7 @@ export const authService = {
   // Admin login - uses the specific admin login endpoint
   adminLogin: async (email, password) => {
     try {
+      // Update endpoint to match your actual API route for admin login
       const response = await api.post('/auth/admin/login', { email, password });
       
       if (response.data.token) {
@@ -126,63 +127,6 @@ export const authService = {
   // Get the authentication token
   getToken: () => {
     return localStorage.getItem('token');
-  },
-  
-  // Forgot password
-  forgotPassword: async (email) => {
-    try {
-      const response = await api.post('/auth/forgot-password', { email });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: error.message };
-    }
-  },
-  
-  // Reset password
-  resetPassword: async (token, password, confirmPassword) => {
-    try {
-      const response = await api.post('/auth/reset-password', {
-        token,
-        password,
-        confirmPassword
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: error.message };
-    }
-  }
-};
-
-// Export applicationService with the updated token access
-export const applicationService = {
-  // Get all applications (admin only)
-  getAllApplications: async () => {
-    try {
-      const response = await api.get('/applications');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-  
-  // Get application details by ID
-  getApplicationById: async (id) => {
-    try {
-      const response = await api.get(`/applications/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-  
-  // Update application status
-  updateApplicationStatus: async (id, status) => {
-    try {
-      const response = await api.patch(`/applications/${id}/status`, { status });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
   }
 };
 
