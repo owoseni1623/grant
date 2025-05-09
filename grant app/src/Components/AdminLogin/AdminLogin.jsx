@@ -13,6 +13,7 @@ const AdminLogin = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
 
   const { adminLogin, isAuthenticated, user } = useUsGrantContext();
@@ -33,10 +34,69 @@ const AdminLogin = () => {
     }));
   };
 
+  const manualAdminLogin = async (email, password) => {
+    try {
+      setDebugInfo('Attempting manual admin login...');
+      
+      // Attempt with direct XMLHttpRequest for maximum control
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        // Update URL if needed based on your API structure
+        xhr.open('POST', 'https://grant-pi.vercel.app/api/auth/admin/login', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true;
+        
+        xhr.onload = function() {
+          setDebugInfo(`XHR status: ${xhr.status}, Response: ${xhr.responseText.substring(0, 100)}`);
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              
+              if (data.token) {
+                // Store token and user info
+                localStorage.setItem('token', data.token);
+                const userData = {
+                  id: data._id,
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  email: data.email,
+                  role: data.role
+                };
+                localStorage.setItem('userData', JSON.stringify(userData));
+                
+                // Navigate to dashboard
+                navigate('/admin/dashboard');
+                resolve(true);
+              } else {
+                reject(new Error('No authentication token received'));
+              }
+            } catch (e) {
+              reject(new Error('Error parsing response: ' + e.message));
+            }
+          } else {
+            reject(new Error(`Server error: ${xhr.status} ${xhr.statusText}`));
+          }
+        };
+        
+        xhr.onerror = function() {
+          setDebugInfo('XHR network error occurred');
+          reject(new Error('Network error occurred'));
+        };
+        
+        xhr.send(JSON.stringify({ email, password }));
+      });
+    } catch (error) {
+      setDebugInfo(`Manual login error: ${error.message}`);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setDebugInfo(null);
     
     const { email, password } = formData;
     
@@ -48,14 +108,31 @@ const AdminLogin = () => {
     try {
       setLoading(true);
       
-      // Use the adminLogin method from UsGrantContext
-      const success = await adminLogin(email, password, navigate);
-      
-      if (success) {
-        setSuccess('Login successful! Redirecting to admin dashboard...');
-      } else {
-        setError('Login failed. Please check your admin credentials.');
+      // Try context-based admin login
+      try {
+        // Use the adminLogin method from UsGrantContext
+        const success = await adminLogin(email, password, navigate);
+        
+        if (success) {
+          setSuccess('Login successful! Redirecting to admin dashboard...');
+          return;
+        }
+      } catch (contextError) {
+        setDebugInfo(`Context login failed: ${contextError.message}`);
+        console.error('Context admin login failed:', contextError);
+        
+        // If context login fails, try direct API call
+        try {
+          await manualAdminLogin(email, password);
+          setSuccess('Login successful! Redirecting to admin dashboard...');
+          return;
+        } catch (manualError) {
+          console.error('Manual admin login failed:', manualError);
+          throw new Error('Login failed after multiple attempts. Please check your credentials.');
+        }
       }
+      
+      setError('Login failed. Please check your admin credentials.');
     } catch (err) {
       console.error('Admin login error:', err);
       setError(err.message || 'Login failed. Please check your admin credentials.');
@@ -84,6 +161,12 @@ const AdminLogin = () => {
             <div className="admin-success-message">
               <FaCheckCircle className="admin-message-icon" />
               <span>{success}</span>
+            </div>
+          )}
+          
+          {debugInfo && process.env.NODE_ENV === 'development' && (
+            <div className="admin-debug-message">
+              <small>{debugInfo}</small>
             </div>
           )}
           

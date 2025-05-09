@@ -3,10 +3,16 @@ import axios from 'axios';
 // Update the base URL to match your actual API endpoint
 const BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
 
-// Create axios instance with base URL
+// Create axios instance with base URL and proper configs
 const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // Add this to handle cookies properly
+  withCredentials: true, // Handle cookies properly
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  // Add timeout to prevent hanging requests
+  timeout: 10000,
 });
 
 // Add auth token to every request
@@ -16,13 +22,27 @@ api.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, error => {
+  return Promise.reject(error);
 });
 
-// Handle expired tokens
+// Handle expired tokens and other response issues
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response?.status === 401) {
+    console.error('API Error:', error);
+    
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network Error:', error.message);
+      return Promise.reject({ 
+        message: 'Network error. Please check your connection.' 
+      });
+    }
+    
+    // Handle 401 Unauthorized errors (expired or invalid token)
+    if (error.response.status === 401) {
+      console.log('Authentication error, clearing credentials');
       // Clear tokens on unauthorized
       localStorage.removeItem('token');
       localStorage.removeItem('userData');
@@ -32,7 +52,16 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    return Promise.reject(error);
+    
+    // Handle 405 Method Not Allowed errors
+    if (error.response.status === 405) {
+      console.error('Method not allowed error. Check API endpoint configuration.');
+      return Promise.reject({
+        message: 'API configuration error. Please contact support.'
+      });
+    }
+    
+    return Promise.reject(error.response?.data || { message: error.message });
   }
 );
 
@@ -40,7 +69,6 @@ export const authService = {
   // Regular user login
   login: async (email, password) => {
     try {
-      // Update endpoint to match your actual API route
       const response = await api.post('/auth/login', { email, password });
       
       if (response.data.token) {
@@ -58,38 +86,72 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
-      throw error.response?.data || { message: error.message };
+      throw error;
     }
   },
   
   // Admin login - uses the specific admin login endpoint
+  // With fallback mechanism for problematic endpoints
   adminLogin: async (email, password) => {
     try {
-      // Update endpoint to match your actual API route for admin login
-      const response = await api.post('/auth/admin/login', { email, password });
-      
-      if (response.data.token) {
-        // Store token and admin user data
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userData', JSON.stringify({
-          _id: response.data._id,
-          firstName: response.data.firstName,
-          lastName: response.data.lastName,
-          email: response.data.email,
-          role: response.data.role
-        }));
+      // First try with axios
+      try {
+        const response = await api.post('/auth/admin/login', { email, password });
+        
+        if (response.data.token) {
+          // Store token and admin user data
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('userData', JSON.stringify({
+            _id: response.data._id,
+            firstName: response.data.firstName,
+            lastName: response.data.lastName,
+            email: response.data.email,
+            role: response.data.role
+          }));
+        }
+        
+        return response.data;
+      } catch (axiosError) {
+        // If axios fails with 405, try fetch instead
+        if (axiosError.response?.status === 405) {
+          console.log('Trying alternative fetch method for admin login');
+          
+          // Create a fetch request manually
+          const response = await fetch(`${BASE_URL}/auth/admin/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userData', JSON.stringify({
+              _id: data._id,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              email: data.email,
+              role: data.role
+            }));
+          }
+          
+          return data;
+        } else {
+          throw axiosError;
+        }
       }
-      
-      return response.data;
     } catch (error) {
       console.error('Admin login error:', error);
-      throw error.response?.data || { message: error.message };
+      throw error;
     }
-  },
-  
-  // Login with credentials object (for component compatibility)
-  loginWithCredentials: async (credentials) => {
-    return authService.login(credentials.email, credentials.password);
   },
   
   // Register new user
@@ -98,7 +160,7 @@ export const authService = {
       const response = await api.post('/auth/register', userData);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: error.message };
+      throw error;
     }
   },
   

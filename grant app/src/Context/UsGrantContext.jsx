@@ -76,55 +76,63 @@ export const UsGrantProvider = ({ children }) => {
     }
   };
 
-  // Admin login function
+  // Admin login function - UPDATED to fix the issue
   const adminLogin = async (email, password, navigate) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include', // Include cookies
-      });
-
-      // Handle non-OK responses
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          // If we can't parse as JSON, use the text itself
-          throw new Error(errorText || 'Admin login failed');
-        }
-        throw new Error(errorData.message || 'Admin login failed');
-      }
-
-      // Parse successful response
-      const data = await response.json();
-
-      if (data.token) {
-        // Store token and user info
-        localStorage.setItem('token', data.token);
-        const userData = {
-          id: data._id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          role: data.role
+      // Changed to use XMLHttpRequest to troubleshoot fetch issues
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_URL}/auth/admin/login`, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true;
+        
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              
+              if (data.token) {
+                // Store token and user info
+                localStorage.setItem('token', data.token);
+                const userData = {
+                  id: data._id,
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  email: data.email,
+                  role: data.role
+                };
+                localStorage.setItem('userData', JSON.stringify(userData));
+                setUser(userData);
+                setIsAuthenticated(true);
+                
+                // Navigate if navigate function is provided
+                navigateToPage(navigate, '/admin/dashboard');
+                resolve(true);
+              } else {
+                setError('No authentication token received');
+                resolve(false);
+              }
+            } catch (e) {
+              setError('Error parsing response');
+              console.error('Parse error:', e);
+              resolve(false);
+            }
+          } else {
+            setError('Admin login failed: ' + xhr.status + ' ' + xhr.statusText);
+            console.error('Admin login error:', xhr.status, xhr.statusText, xhr.responseText);
+            resolve(false);
+          }
         };
-        localStorage.setItem('userData', JSON.stringify(userData));
-        setUser(userData);
-        setIsAuthenticated(true);
-
-        // Navigate if navigate function is provided
-        navigateToPage(navigate, '/admin/dashboard');
-        return true;
-      } else {
-        throw new Error('No authentication token received');
-      }
+        
+        xhr.onerror = function() {
+          setError('Network error occurred during admin login');
+          console.error('Network error:', xhr);
+          resolve(false);
+        };
+        
+        xhr.send(JSON.stringify({ email, password }));
+      });
     } catch (error) {
       console.error('Admin login error:', error);
       setError(error.message || 'An unexpected error occurred');
