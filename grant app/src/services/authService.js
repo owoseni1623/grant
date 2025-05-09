@@ -41,7 +41,7 @@ export const authService = {
   // Regular user login
   login: async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/admin/login', { email, password });
       
       if (response.data.token) {
         // Store token and user data
