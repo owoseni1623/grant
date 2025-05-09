@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Determine the base URL based on the environment
 const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-api-production-url.com/api'  // Update this with your production API URL
+  ? 'https://grant-api.onrender.com'  // Update this with your production API URL
   : '/api'; // For local development with proxy
 
 // Create axios instance with base URL
