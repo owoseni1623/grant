@@ -1,27 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 import { authService } from '../../services/authService';
+import './AdminLogin.css';
 
-const Login = () => {
+const AdminLogin = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if already logged in
-    if (authService.isAuthenticated()) {
-      // Redirect based on role
-      const userData = authService.getCurrentUser();
-      if (userData?.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+    // Check if already logged in as admin
+    if (authService.isAuthenticated() && authService.isAdmin()) {
+      navigate('/admin/dashboard');
     }
   }, [navigate]);
 
@@ -36,6 +33,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     
     const { email, password } = formData;
     
@@ -46,111 +44,111 @@ const Login = () => {
     
     try {
       setLoading(true);
-      const data = await authService.login(email, password);
       
-      // Redirect based on user role
-      if (data.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
+      // Important: Use the adminLogin method instead of the regular login
+      const data = await authService.adminLogin(email, password);
+      
+      if (data.token) {
+        setSuccess('Login successful! Redirecting to admin dashboard...');
+        
+        // Short delay before redirect for better UX
+        setTimeout(() => {
+          navigate('/admin/dashboard');
+        }, 1500);
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials.');
+      console.error('Admin login error:', err);
+      setError(err.message || 'Login failed. Please check your admin credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Sign In</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Enter your credentials to access your account
-          </p>
+    <div className="admin-login-container">
+      <div className="admin-login-card">
+        <div className="admin-login-header">
+          <h1>Admin Portal</h1>
+          <p>Enter your credentials to access the administrative dashboard</p>
         </div>
         
-        {error && (
-          <div className="flex items-center p-4 text-sm text-red-800 border border-red-300 rounded-md bg-red-50">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            <span>{error}</span>
-          </div>
-        )}
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
+        <form className="admin-login-form" onSubmit={handleSubmit}>
+          {error && (
+            <div className="admin-error-message">
+              <FaExclamationCircle className="admin-message-icon" />
+              <span>{error}</span>
+            </div>
+          )}
+          
+          {success && (
+            <div className="admin-success-message">
+              <FaCheckCircle className="admin-message-icon" />
+              <span>{success}</span>
+            </div>
+          )}
+          
+          <div className="admin-form-group">
+            <label htmlFor="email">Email Address</label>
+            <div className="admin-input-wrapper">
+              <FaUser className="admin-input-icon" />
               <input
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
-                required
                 value={formData.email}
                 onChange={handleChange}
-                className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="name@example.com"
+                className="admin-input-field"
+                placeholder="admin@example.com"
+                required
               />
             </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+          </div>
+          
+          <div className="admin-form-group">
+            <label htmlFor="password">Password</label>
+            <div className="admin-input-wrapper">
+              <FaLock className="admin-input-icon" />
               <input
                 id="password"
                 name="password"
-                type="password"
-                autoComplete="current-password"
-                required
+                type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={handleChange}
-                className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="admin-input-field"
                 placeholder="••••••••"
+                required
               />
+              <button 
+                type="button"
+                className="admin-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-              />
-              <label htmlFor="remember-me" className="block ml-2 text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
           </div>
           
-          <div className="text-center text-sm">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign up
-            </Link>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`admin-login-button ${loading ? 'loading' : ''}`}
+          >
+            {loading ? (
+              <>
+                <FaSpinner className="admin-spinner" />
+                Authenticating...
+              </>
+            ) : (
+              'Sign in as Admin'
+            )}
+          </button>
+          
+          <div className="admin-note">
+            <div className="admin-note-title">Note:</div>
+            <div className="admin-note-content">
+              Use the admin email and password you registered with. For example: 
+              <span className="admin-credential-example"> robert23@gmail.com</span>
+            </div>
           </div>
         </form>
       </div>
@@ -158,4 +156,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default AdminLogin;
