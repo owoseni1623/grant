@@ -37,7 +37,7 @@ const LoginDiagnostic = () => {
 
     // Test API endpoints
     const endpoints = [
-      { name: 'Login', path: '/auth/login', method: 'GET' },
+      { name: 'Login', path: '/auth/login', method: 'POST' }, // Changed from GET to POST
       { name: 'Users', path: '/users', method: 'GET' },
       { name: 'Health', path: '/health', method: 'GET' }
     ];
@@ -118,12 +118,33 @@ const LoginDiagnostic = () => {
         cache: 'no-cache'
       });
 
-      const data = await response.json();
+      // First check if there's actually content to parse
+      const contentType = response.headers.get("content-type");
+      let data = {};
+      
+      if (contentType && contentType.includes("application/json") && response.status !== 204) {
+        const text = await response.text();
+        // Only try to parse if there's actual content
+        if (text && text.trim()) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseError) {
+            console.error("JSON parse error:", parseError, "Response text:", text);
+            data = { message: `Invalid JSON response: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}` };
+          }
+        }
+      }
 
       setTestLoginResult({
         success: response.ok,
         status: response.status,
-        message: response.ok ? 'Login successful' : `Login failed: ${data.message || response.statusText}`,
+        statusText: response.statusText,
+        method: 'POST',
+        message: response.ok 
+          ? 'Login successful' 
+          : response.status === 405 
+            ? `Login failed: Method not allowed. The API might require a different HTTP method.`
+            : `Login failed: ${data.message || response.statusText}`,
         data: response.ok ? data : null
       });
     } catch (error) {
