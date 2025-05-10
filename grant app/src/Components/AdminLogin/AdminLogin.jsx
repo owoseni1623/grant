@@ -60,18 +60,27 @@ const AdminLogin = () => {
       setDebugInfo('Attempting admin login with direct service call...');
       
       try {
-        // Use the updated authService directly
+        // Use the authService directly
         const userData = await authService.adminLogin(email, password);
         
         // Store admin session data
         localStorage.setItem('userData', JSON.stringify({
-          ...userData,
+          id: userData._id,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
           role: 'ADMIN'
         }));
         
+        // Store token
+        localStorage.setItem('token', userData.token);
+        
         setSuccess('Login successful! Redirecting to admin dashboard...');
         setDebugInfo('Login successful via direct service call');
+        
+        // Navigate to admin dashboard
         navigate('/admin/dashboard');
+        return;
       } catch (serviceErr) {
         // If direct service call fails
         setDebugInfo(`Direct service call failed: ${serviceErr.message}`);
@@ -86,7 +95,7 @@ const AdminLogin = () => {
           navigate('/admin/dashboard');
           return;
         } else {
-          throw new Error('Context-based login returned false');
+          throw new Error('Admin login failed. Please verify your credentials.');
         }
       }
     } catch (err) {

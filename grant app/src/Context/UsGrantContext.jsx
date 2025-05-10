@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authService } from '../services/authService';
 
 // Create the context
 const UsGrantContext = createContext(null);
@@ -17,48 +18,13 @@ export const UsGrantProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Get base API URL from environment or use the default
-  // IMPORTANT FIX: Ensure the API URL doesn't have a trailing slash
-  const API_URL = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
-
   // Login function with enhanced error handling
   const login = async (email, password, navigate) => {
     setError(null);
     try {
-      console.log('Attempting login to:', `${API_URL}/auth/login`);
-      
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include', // Include cookies
-      });
+      const data = await authService.login(email, password);
 
-      // Log the status before processing
-      console.log('Login response status:', response.status);
-
-      // Handle non-OK responses
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        
-        // Check if the response is JSON
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
-        } else {
-          // If not JSON, get text
-          const errorText = await response.text();
-          throw new Error(errorText || `Login failed with status ${response.status}`);
-        }
-      }
-
-      // Parse successful response
-      const data = await response.json();
-      console.log('Login successful, received data:', data);
-
-      if (data.token) {
+      if (data && data.token) {
         // Store token and user info
         localStorage.setItem('token', data.token);
         const userData = {
@@ -85,43 +51,13 @@ export const UsGrantProvider = ({ children }) => {
     }
   };
 
-  // Admin login function - UPDATED to handle different response types
+  // Admin login function
   const adminLogin = async (email, password, navigate) => {
     setError(null);
     try {
-      console.log('Attempting admin login to:', `${API_URL}/auth/admin/login`);
+      const data = await authService.adminLogin(email, password);
       
-      const response = await fetch(`${API_URL}/auth/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include', // Include cookies
-      });
-      
-      console.log('Admin login response status:', response.status);
-      
-      // Handle non-OK responses
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        
-        // Check if the response is JSON
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Admin login failed');
-        } else {
-          // If not JSON, get text
-          const errorText = await response.text();
-          throw new Error(errorText || `Admin login failed with status ${response.status}`);
-        }
-      }
-      
-      // Parse successful response
-      const data = await response.json();
-      console.log('Admin login successful, received data:', data);
-      
-      if (data.token) {
+      if (data && data.token) {
         // Store token and user info
         localStorage.setItem('token', data.token);
         const userData = {
@@ -150,8 +86,7 @@ export const UsGrantProvider = ({ children }) => {
 
   // Logout function
   const logout = (navigate) => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
+    authService.logout();
     setUser(null);
     setIsAuthenticated(false);
 
@@ -162,19 +97,7 @@ export const UsGrantProvider = ({ children }) => {
   // Token validation
   const validateToken = async (token) => {
     try {
-      const response = await fetch(`${API_URL}/auth/profile`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include', // Include cookies
-      });
-
-      if (!response.ok) {
-        throw new Error('Token invalid');
-      }
-
-      const data = await response.json();
+      const data = await authService.validateToken(token);
 
       setUser({
         id: data._id,
@@ -200,27 +123,7 @@ export const UsGrantProvider = ({ children }) => {
   const resetPassword = async (email) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      // Handle non-OK responses with better error handling
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to send reset link');
-        } else {
-          const errorText = await response.text();
-          throw new Error(errorText || `Failed with status ${response.status}`);
-        }
-      }
-
-      const data = await response.json();
+      const data = await authService.forgotPassword(email);
 
       return {
         success: true,
@@ -240,27 +143,7 @@ export const UsGrantProvider = ({ children }) => {
   const signUp = async (userData, navigate) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      // Better error handling for non-OK responses
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Registration failed');
-        } else {
-          const errorText = await response.text();
-          throw new Error(errorText || `Registration failed with status ${response.status}`);
-        }
-      }
-
-      const data = await response.json();
+      const data = await authService.register(userData);
 
       // Navigate to login after successful registration
       navigateToPage(navigate, '/login');

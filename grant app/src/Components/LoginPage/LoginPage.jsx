@@ -40,14 +40,27 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      // Try direct service login first
       setDebugInfo('Attempting direct service login...');
       
-      // First try with direct service call
       try {
         const userData = await authService.login(email, password);
+        
+        // Update localStorage
+        localStorage.setItem('token', userData.token);
+        localStorage.setItem('userData', JSON.stringify({
+          id: userData._id,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          role: userData.role
+        }));
+        
         addNotification('Login successful!', NotificationType.SUCCESS);
         setDebugInfo('Login successful via direct service');
-        login(userData); // Update context with user data
+        
+        // Update context with login success
+        login(email, password);
         navigate('/');
         return;
       } catch (serviceErr) {
@@ -55,13 +68,15 @@ const LoginPage = () => {
         console.error('Direct service login failed:', serviceErr);
         
         // Fallback to context-based login
+        setDebugInfo('Trying context-based login...');
         const success = await login(email, password);
+        
         if (success) {
           addNotification('Login successful!', NotificationType.SUCCESS);
           navigate('/');
           return;
         } else {
-          throw new Error('Context-based login returned false');
+          throw new Error('Login failed. Please check your credentials.');
         }
       }
     } catch (err) {
