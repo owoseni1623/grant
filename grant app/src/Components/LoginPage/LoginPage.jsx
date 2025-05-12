@@ -20,10 +20,10 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
-  const [showDiagnostic, setShowDiagnostic] = useState(false); // State to toggle diagnostic tool
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { addNotification } = useNotification();
 
-  const { login, isAuthenticated } = useUsGrantContext();
+  const { login, isAuthenticated, setError: setContextError } = useUsGrantContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,14 +37,19 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setDebugInfo('');
+    setContextError && setContextError(null);
     setIsLoading(true);
 
     try {
-      // Try direct service login first
+      // Try direct service login first using the improved service
       setDebugInfo('Attempting direct service login...');
       
       try {
         const userData = await authService.login(email, password);
+        
+        if (!userData || !userData.token) {
+          throw new Error('Invalid response from server - missing authentication token');
+        }
         
         // Update localStorage
         localStorage.setItem('token', userData.token);
@@ -59,8 +64,14 @@ const LoginPage = () => {
         addNotification('Login successful!', NotificationType.SUCCESS);
         setDebugInfo('Login successful via direct service');
         
-        // Update context with login success
-        login(email, password);
+        // Manually update context
+        try {
+          await login(email, password);
+        } catch (loginErr) {
+          console.log('Context login failed but user is authenticated', loginErr);
+          // Continue anyway since direct login worked
+        }
+        
         navigate('/');
         return;
       } catch (serviceErr) {
@@ -69,7 +80,7 @@ const LoginPage = () => {
         
         // Fallback to context-based login
         setDebugInfo('Trying context-based login...');
-        const success = await login(email, password);
+        const success = await login(email, password, navigate);
         
         if (success) {
           addNotification('Login successful!', NotificationType.SUCCESS);
@@ -86,6 +97,16 @@ const LoginPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Simple validation
+  const isValidEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return email === '' || emailRegex.test(email);
+  };
+
+  const isValidPassword = () => {
+    return password === '' || password.length >= 6;
   };
 
   return (
@@ -109,10 +130,11 @@ const LoginPage = () => {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
-                placeholder="Email (e.g. odumala@gmail.com)" 
-                className="input-field"
+                placeholder="Email (e.g. john@gmail.com)" 
+                className={`input-field ${email && !isValidEmail() ? 'input-error' : ''}`}
               />
             </div>
+            {email && !isValidEmail() && <div className="field-error">Please enter a valid email address</div>}
           </div>
           
           <div className="form-group">
@@ -125,7 +147,7 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
                 placeholder="Password" 
-                className="input-field"
+                className={`input-field ${password && !isValidPassword() ? 'input-error' : ''}`}
               />
               <button 
                 type="button" 
@@ -135,12 +157,13 @@ const LoginPage = () => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+            {password && !isValidPassword() && <div className="field-error">Password must be at least 6 characters</div>}
           </div>
           
           <div className="form-actions">
             <button 
               type="submit" 
-              disabled={isLoading} 
+              disabled={isLoading || (email && !isValidEmail()) || (password && !isValidPassword())} 
               className={`login-button ${isLoading ? 'loading' : ''}`}
             >
               {isLoading ? (

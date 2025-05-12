@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 import { useUsGrantContext } from '../../Context/UsGrantContext';
 import { authService } from '../../services/authService';
+import { useNotification, NotificationType } from '../../Context/NotificationContext';
 import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
 import './AdminLogin.css';
 
@@ -16,10 +17,11 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [showDiagnostic, setShowDiagnostic] = useState(false); // State to toggle diagnostic tool
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const navigate = useNavigate();
 
-  const { adminLogin, isAuthenticated } = useUsGrantContext();
+  const { adminLogin, isAuthenticated, setError: setContextError } = useUsGrantContext();
+  const { addNotification } = useNotification();
 
   useEffect(() => {
     // Check if already logged in as admin
@@ -47,11 +49,13 @@ const AdminLogin = () => {
     setError('');
     setSuccess('');
     setDebugInfo(null);
+    setContextError && setContextError(null);
     
     const { email, password } = formData;
     
     if (!email || !password) {
       setError('Please enter both email and password');
+      addNotification('Please enter both email and password', NotificationType.WARNING);
       return;
     }
     
@@ -63,13 +67,17 @@ const AdminLogin = () => {
         // Use the authService directly
         const userData = await authService.adminLogin(email, password);
         
+        if (!userData || !userData.token) {
+          throw new Error('Invalid response from server - missing authentication token');
+        }
+        
         // Store admin session data
         localStorage.setItem('userData', JSON.stringify({
           id: userData._id,
           firstName: userData.firstName,
           lastName: userData.lastName,
           email: userData.email,
-          role: 'ADMIN'
+          role: userData.role || 'ADMIN'
         }));
         
         // Store token
@@ -77,9 +85,12 @@ const AdminLogin = () => {
         
         setSuccess('Login successful! Redirecting to admin dashboard...');
         setDebugInfo('Login successful via direct service call');
+        addNotification('Admin login successful!', NotificationType.SUCCESS);
         
         // Navigate to admin dashboard
-        navigate('/admin/dashboard');
+        setTimeout(() => {
+          navigate('/admin/dashboard');
+        }, 1000);
         return;
       } catch (serviceErr) {
         // If direct service call fails
@@ -92,7 +103,10 @@ const AdminLogin = () => {
         
         if (success) {
           setSuccess('Login successful! Redirecting to admin dashboard...');
-          navigate('/admin/dashboard');
+          addNotification('Admin login successful!', NotificationType.SUCCESS);
+          setTimeout(() => {
+            navigate('/admin/dashboard');
+          }, 1000);
           return;
         } else {
           throw new Error('Admin login failed. Please verify your credentials.');
@@ -101,10 +115,22 @@ const AdminLogin = () => {
     } catch (err) {
       console.error('Admin login failed:', err);
       setDebugInfo(`Login failed: ${err.message}`);
-      setError('Login failed. Please verify your admin credentials.');
+      const errorMessage = err.message || 'Login failed. Please verify your admin credentials.';
+      setError(errorMessage);
+      addNotification(errorMessage, NotificationType.ERROR);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Simple validation
+  const isValidEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return formData.email === '' || emailRegex.test(formData.email);
+  };
+
+  const isValidPassword = () => {
+    return formData.password === '' || formData.password.length >= 6;
   };
 
   return (
@@ -146,11 +172,14 @@ const AdminLogin = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="admin-input-field"
+                className={`admin-input-field ${formData.email && !isValidEmail() ? 'input-error' : ''}`}
                 placeholder="robert23@gmail.com"
                 required
               />
             </div>
+            {formData.email && !isValidEmail() && (
+              <div className="field-error">Please enter a valid email address</div>
+            )}
           </div>
           
           <div className="admin-form-group">
@@ -163,7 +192,7 @@ const AdminLogin = () => {
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={handleChange}
-                className="admin-input-field"
+                className={`admin-input-field ${formData.password && !isValidPassword() ? 'input-error' : ''}`}
                 placeholder="••••••••"
                 required
               />
@@ -175,11 +204,14 @@ const AdminLogin = () => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+            {formData.password && !isValidPassword() && (
+              <div className="field-error">Password must be at least 6 characters</div>
+            )}
           </div>
           
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (formData.email && !isValidEmail()) || (formData.password && !isValidPassword())}
             className={`admin-login-button ${loading ? 'loading' : ''}`}
           >
             {loading ? (
