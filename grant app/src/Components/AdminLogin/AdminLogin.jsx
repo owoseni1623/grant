@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { useUsGrantContext } from '../../Context/UsGrantContext';
 import { authService } from '../../services/authService';
 import { useNotification, NotificationType } from '../../Context/NotificationContext';
@@ -17,11 +17,29 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [networkStatus, setNetworkStatus] = useState({
+    connected: navigator.onLine,
+    testing: false
+  });
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const navigate = useNavigate();
 
   const { adminLogin, isAuthenticated, setError: setContextError } = useUsGrantContext();
   const { addNotification } = useNotification();
+
+  // Check network connectivity
+  useEffect(() => {
+    const handleOnline = () => setNetworkStatus(prev => ({ ...prev, connected: true }));
+    const handleOffline = () => setNetworkStatus(prev => ({ ...prev, connected: false }));
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     // Check if already logged in as admin
@@ -35,6 +53,37 @@ const AdminLogin = () => {
       console.error('Error checking admin status:', e);
     }
   }, [navigate, isAuthenticated]);
+
+  // Test API connectivity
+  const testApiConnection = async () => {
+    setNetworkStatus(prev => ({ ...prev, testing: true }));
+    try {
+      const apiUrl = 'https://grant-api.onrender.com';
+      const testUrl = `${apiUrl}/api/auth/admin/login`; // Use a real admin endpoint
+      
+      setDebugInfo(`Testing connection to admin endpoint at ${apiUrl}...`);
+      
+      // Just do an OPTIONS request to see if the server responds
+      const response = await fetch(testUrl, { 
+        method: 'OPTIONS',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        mode: 'cors',
+      });
+      
+      if (response.ok) {
+        setDebugInfo(`Connection successful: ${response.status} ${response.statusText}`);
+      } else {
+        setDebugInfo(`Connection response: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      setDebugInfo(`Connection error: ${error.message}`);
+    } finally {
+      setNetworkStatus(prev => ({ ...prev, testing: false }));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,6 +101,12 @@ const AdminLogin = () => {
     setContextError && setContextError(null);
     
     const { email, password } = formData;
+    
+    // Validate network connection first
+    if (!navigator.onLine) {
+      setError('You appear to be offline. Please check your internet connection and try again.');
+      return;
+    }
     
     if (!email || !password) {
       setError('Please enter both email and password');
@@ -140,6 +195,22 @@ const AdminLogin = () => {
           <h1>Admin Portal</h1>
           <p>Enter your credentials to access the administrative dashboard</p>
         </div>
+        
+        {!networkStatus.connected && (
+          <div className="network-warning" style={{ 
+            backgroundColor: '#fef6e4', 
+            border: '1px solid #f8d7da', 
+            borderRadius: '4px', 
+            padding: '10px', 
+            marginBottom: '15px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <FaExclamationTriangle style={{ color: '#dc3545' }} />
+            <span>You are currently offline. Please check your internet connection.</span>
+          </div>
+        )}
         
         <form className="admin-login-form" onSubmit={handleSubmit}>
           {error && (
@@ -232,23 +303,42 @@ const AdminLogin = () => {
             </div>
           </div>
           
-          {/* Toggle button for diagnostic tool */}
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <button 
-              type="button"
-              onClick={() => setShowDiagnostic(!showDiagnostic)}
-              style={{
-                background: 'none',
-                border: '1px solid #ccc',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                color: '#555'
-              }}
-            >
-              {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
-            </button>
+          {/* Network testing and diagnostic tools */}
+          <div className="diagnostics-section" style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <button 
+                type="button"
+                onClick={testApiConnection}
+                disabled={networkStatus.testing}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ccc',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: '#555'
+                }}
+              >
+                {networkStatus.testing ? 'Testing...' : 'Test API Connection'}
+              </button>
+              
+              <button 
+                type="button"
+                onClick={() => setShowDiagnostic(!showDiagnostic)}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ccc',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: '#555'
+                }}
+              >
+                {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

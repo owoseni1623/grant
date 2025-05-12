@@ -1,8 +1,7 @@
-// services/authService.js
-
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://grant-api.onrender.com';
+// Force use of API URL regardless of environment
+const API_BASE_URL = 'https://grant-api.onrender.com';
 
 // Create axios instance with proper configuration
 const apiClient = axios.create({
@@ -26,11 +25,28 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle responses and errors consistently
+// Enhanced error handling interceptor
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+    console.error('API Error:', error);
+    
+    // If the error has a response, log it for debugging
+    if (error.response) {
+      console.error('Response error:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      // If the request was made but no response was received
+      console.error('Request error - no response received:', error.request);
+    } else {
+      // If something happened in setting up the request
+      console.error('Error setting up request:', error.message);
+    }
+    
     throw error.response?.data || error;
   }
 );
@@ -46,22 +62,51 @@ export const authService = {
     }
   },
 
-  // User login
+  // User login with detailed error handling
   login: async (email, password) => {
     try {
+      console.log('Attempting login to:', `${API_BASE_URL}/api/auth/login`);
       return await apiClient.post('/api/auth/login', { email, password });
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Check for network or server errors
+      if (!error.response) {
+        throw new Error('Network error - please check your connection or try again later');
+      }
+      
+      // Handle specific status codes
+      if (error.response.status === 401) {
+        throw new Error('Invalid credentials. Please check your email and password.');
+      } else if (error.response.status === 404 || error.response.status === 405) {
+        throw new Error('Login service currently unavailable. Please try again later.');
+      }
+      
       throw error;
     }
   },
 
-  // Admin login
+  // Admin login with detailed error handling
   adminLogin: async (email, password) => {
     try {
+      console.log('Attempting admin login to:', `${API_BASE_URL}/api/auth/admin/login`);
       return await apiClient.post('/api/auth/admin/login', { email, password });
     } catch (error) {
       console.error('Admin login error:', error);
+      
+      // Similar error handling as login
+      if (!error.response) {
+        throw new Error('Network error - please check your connection or try again later');
+      }
+      
+      if (error.response.status === 401) {
+        throw new Error('Invalid admin credentials. Please check your email and password.');
+      } else if (error.response.status === 403) {
+        throw new Error('Access denied. You do not have admin privileges.');
+      } else if (error.response.status === 404 || error.response.status === 405) {
+        throw new Error('Admin login service currently unavailable. Please try again later.');
+      }
+      
       throw error;
     }
   },

@@ -8,7 +8,8 @@ import {
   FaLock, 
   FaSpinner, 
   FaEye, 
-  FaEyeSlash 
+  FaEyeSlash,
+  FaExclamationTriangle 
 } from 'react-icons/fa';
 import './LoginPage.css';
 import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
@@ -20,18 +21,65 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
+  const [networkStatus, setNetworkStatus] = useState({
+    connected: navigator.onLine,
+    testing: false
+  });
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { addNotification } = useNotification();
 
   const { login, isAuthenticated, setError: setContextError } = useUsGrantContext();
   const navigate = useNavigate();
 
+  // Check network connectivity
   useEffect(() => {
-    // Redirect if already logged in
+    const handleOnline = () => setNetworkStatus(prev => ({ ...prev, connected: true }));
+    const handleOffline = () => setNetworkStatus(prev => ({ ...prev, connected: false }));
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
     if (isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
+
+  // Test API connectivity
+  const testApiConnection = async () => {
+    setNetworkStatus(prev => ({ ...prev, testing: true }));
+    try {
+      const apiUrl = 'https://grant-api.onrender.com';
+      const testUrl = `${apiUrl}/api/health`;
+      
+      setDebugInfo(`Testing connection to ${testUrl}...`);
+      const response = await fetch(testUrl, { 
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        mode: 'cors',
+      });
+      
+      if (response.ok) {
+        setDebugInfo(`Connection successful: ${response.status} ${response.statusText}`);
+      } else {
+        setDebugInfo(`Connection failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      setDebugInfo(`Connection error: ${error.message}`);
+    } finally {
+      setNetworkStatus(prev => ({ ...prev, testing: false }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,9 +88,16 @@ const LoginPage = () => {
     setContextError && setContextError(null);
     setIsLoading(true);
 
+    // Validate network connection first
+    if (!navigator.onLine) {
+      setError('You appear to be offline. Please check your internet connection and try again.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Try direct service login first using the improved service
-      setDebugInfo('Attempting direct service login...');
+      setDebugInfo('Attempting login via direct service call...');
       
       try {
         const userData = await authService.login(email, password);
@@ -64,7 +119,7 @@ const LoginPage = () => {
         addNotification('Login successful!', NotificationType.SUCCESS);
         setDebugInfo('Login successful via direct service');
         
-        // Manually update context
+        // Sync with context
         try {
           await login(email, password);
         } catch (loginErr) {
@@ -116,6 +171,13 @@ const LoginPage = () => {
           <h1>grant.GOV Secure Login</h1>
           <p>Access Your Government Grant Portal</p>
         </div>
+        
+        {!networkStatus.connected && (
+          <div className="network-warning">
+            <FaExclamationTriangle />
+            <span>You are currently offline. Please check your internet connection.</span>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
@@ -197,23 +259,43 @@ const LoginPage = () => {
             </div>
           </div>
           
-          {/* Toggle button for diagnostic tool */}
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <button 
-              type="button"
-              onClick={() => setShowDiagnostic(!showDiagnostic)}
-              style={{
-                background: 'none',
-                border: '1px solid #ccc',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                color: '#555'
-              }}
-            >
-              {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
-            </button>
+          {/* Network testing tools */}
+          <div className="diagnostics-section">
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+              <button 
+                type="button"
+                onClick={testApiConnection}
+                disabled={networkStatus.testing}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ccc',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: '#555',
+                  marginRight: '10px'
+                }}
+              >
+                {networkStatus.testing ? 'Testing...' : 'Test API Connection'}
+              </button>
+              
+              <button 
+                type="button"
+                onClick={() => setShowDiagnostic(!showDiagnostic)}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ccc',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: '#555'
+                }}
+              >
+                {showDiagnostic ? 'Hide Diagnostic Tool' : 'Show Diagnostic Tool'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
