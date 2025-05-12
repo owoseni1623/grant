@@ -9,7 +9,8 @@ import {
   FaSpinner, 
   FaEye, 
   FaEyeSlash,
-  FaExclamationTriangle 
+  FaExclamationTriangle,
+  FaSyncAlt
 } from 'react-icons/fa';
 import './LoginPage.css';
 import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
@@ -18,12 +19,14 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
   const [networkStatus, setNetworkStatus] = useState({
     connected: navigator.onLine,
-    testing: false
+    testing: false,
+    apiStatus: null
   });
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { addNotification } = useNotification();
@@ -38,6 +41,9 @@ const LoginPage = () => {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Initial API status check
+    testApiConnection();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -60,22 +66,47 @@ const LoginPage = () => {
       const testUrl = `${apiUrl}/api/health`;
       
       setDebugInfo(`Testing connection to ${testUrl}...`);
-      const response = await fetch(testUrl, { 
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        mode: 'cors',
-      });
       
-      if (response.ok) {
-        setDebugInfo(`Connection successful: ${response.status} ${response.statusText}`);
-      } else {
-        setDebugInfo(`Connection failed: ${response.status} ${response.statusText}`);
+      try {
+        const response = await fetch(testUrl, { 
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          mode: 'cors',
+        });
+        
+        if (response.ok) {
+          setDebugInfo(`Connection successful: ${response.status} ${response.statusText}`);
+          setNetworkStatus(prev => ({ ...prev, apiStatus: 'connected' }));
+        } else {
+          setDebugInfo(`Connection limited: ${response.status} ${response.statusText}`);
+          setNetworkStatus(prev => ({ ...prev, apiStatus: 'limited' }));
+        }
+      } catch (fetchError) {
+        // Fall back to OPTIONS request if GET fails
+        try {
+          const optionsResponse = await fetch(apiUrl, { 
+            method: 'OPTIONS',
+            mode: 'cors',
+          });
+          
+          if (optionsResponse.ok) {
+            setDebugInfo(`OPTIONS connection successful: ${optionsResponse.status}`);
+            setNetworkStatus(prev => ({ ...prev, apiStatus: 'limited' }));
+          } else {
+            setDebugInfo(`Connection failed: ${optionsResponse.status}`);
+            setNetworkStatus(prev => ({ ...prev, apiStatus: 'failed' }));
+          }
+        } catch (optionsError) {
+          setDebugInfo(`Connection error: ${optionsError.message}`);
+          setNetworkStatus(prev => ({ ...prev, apiStatus: 'failed' }));
+        }
       }
     } catch (error) {
       setDebugInfo(`Connection error: ${error.message}`);
+      setNetworkStatus(prev => ({ ...prev, apiStatus: 'failed' }));
     } finally {
       setNetworkStatus(prev => ({ ...prev, testing: false }));
     }
@@ -84,6 +115,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setDebugInfo('');
     setContextError && setContextError(null);
     setIsLoading(true);
@@ -116,6 +148,7 @@ const LoginPage = () => {
           role: userData.role
         }));
         
+        setSuccessMessage('Login successful! Redirecting...');
         addNotification('Login successful!', NotificationType.SUCCESS);
         setDebugInfo('Login successful via direct service');
         
@@ -127,7 +160,9 @@ const LoginPage = () => {
           // Continue anyway since direct login worked
         }
         
-        navigate('/');
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
         return;
       } catch (serviceErr) {
         setDebugInfo(`Direct service login failed: ${serviceErr.message}`);
@@ -138,8 +173,11 @@ const LoginPage = () => {
         const success = await login(email, password, navigate);
         
         if (success) {
+          setSuccessMessage('Login successful! Redirecting...');
           addNotification('Login successful!', NotificationType.SUCCESS);
-          navigate('/');
+          setTimeout(() => {
+            navigate('/');
+          }, 1000);
           return;
         } else {
           throw new Error('Login failed. Please check your credentials.');
@@ -179,8 +217,16 @@ const LoginPage = () => {
           </div>
         )}
         
+        {networkStatus.apiStatus === 'failed' && networkStatus.connected && (
+          <div className="network-warning" style={{ backgroundColor: '#fff3cd', color: '#856404' }}>
+            <FaExclamationTriangle />
+            <span>Unable to connect to the authentication server. The service may be temporarily unavailable.</span>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
           {debugInfo && <div className="debug-info"><small>{debugInfo}</small></div>}
           
           <div className="form-group">
@@ -274,10 +320,21 @@ const LoginPage = () => {
                   cursor: 'pointer',
                   fontSize: '12px',
                   color: '#555',
-                  marginRight: '10px'
+                  marginRight: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
                 }}
               >
-                {networkStatus.testing ? 'Testing...' : 'Test API Connection'}
+                {networkStatus.testing ? (
+                  <>
+                    <FaSpinner className="spinner" style={{ fontSize: '10px' }} /> Testing...
+                  </>
+                ) : (
+                  <>
+                    <FaSyncAlt style={{ fontSize: '10px' }} /> Test API Connection
+                  </>
+                )}
               </button>
               
               <button 

@@ -1,308 +1,237 @@
 import React, { useState, useEffect } from 'react';
+import { FaCheckCircle, FaTimesCircle, FaQuestion, FaSync } from 'react-icons/fa';
 
 const LoginDiagnostic = () => {
-  const [diagnosticResults, setDiagnosticResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [apiUrl, setApiUrl] = useState('');
-  const [testCredentials, setTestCredentials] = useState({
-    email: '',
-    password: ''
+  const [diagnosticResults, setDiagnosticResults] = useState({
+    internetConnection: null,
+    apiConnection: null,
+    corsStatus: null,
+    cookiesEnabled: null,
+    localStorageAccess: null
   });
-  const [showTestLogin, setShowTestLogin] = useState(false);
-  const [testLoginResult, setTestLoginResult] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  // Initialize API URL on component mount
+  const runDiagnostics = async () => {
+    setIsRunning(true);
+    setDiagnosticResults({
+      internetConnection: null,
+      apiConnection: null,
+      corsStatus: null,
+      cookiesEnabled: null,
+      localStorageAccess: null
+    });
+
+    // Check internet connection
+    const internet = navigator.onLine;
+    setDiagnosticResults(prev => ({ ...prev, internetConnection: internet }));
+
+    // Check if cookies are enabled
+    const cookiesEnabled = navigator.cookieEnabled;
+    setDiagnosticResults(prev => ({ ...prev, cookiesEnabled }));
+
+    // Check localStorage access
+    try {
+      localStorage.setItem('diagnosticTest', 'test');
+      const testValue = localStorage.getItem('diagnosticTest');
+      localStorage.removeItem('diagnosticTest');
+      setDiagnosticResults(prev => ({ 
+        ...prev, 
+        localStorageAccess: testValue === 'test' 
+      }));
+    } catch (e) {
+      setDiagnosticResults(prev => ({ ...prev, localStorageAccess: false }));
+    }
+
+    // Check API connection
+    try {
+      const apiUrl = 'https://grant-api.onrender.com';
+      // First try OPTIONS, which is more likely to succeed with CORS
+      try {
+        const optionsResponse = await fetch(`${apiUrl}/api/health`, { 
+          method: 'OPTIONS',
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors',
+        });
+        
+        setDiagnosticResults(prev => ({ 
+          ...prev, 
+          apiConnection: optionsResponse.ok,
+          corsStatus: optionsResponse.ok ? 'supported' : 'limited'
+        }));
+      } catch (corsError) {
+        console.log('CORS diagnostic error:', corsError);
+        // Try with no-cors as fallback
+        try {
+          await fetch(apiUrl, { 
+            method: 'GET',
+            mode: 'no-cors'
+          });
+          // If we get here, the request didn't throw, but we can't read the response
+          setDiagnosticResults(prev => ({ 
+            ...prev, 
+            apiConnection: true,
+            corsStatus: 'restricted' 
+          }));
+        } catch (e) {
+          setDiagnosticResults(prev => ({ 
+            ...prev, 
+            apiConnection: false,
+            corsStatus: 'unknown'
+          }));
+        }
+      }
+    } catch (e) {
+      setDiagnosticResults(prev => ({ 
+        ...prev, 
+        apiConnection: false,
+        corsStatus: 'error'
+      }));
+    }
+
+    setIsRunning(false);
+  };
+
   useEffect(() => {
-    const defaultApiUrl = process.env.REACT_APP_API_URL || 'https://grant-pi.vercel.app/api';
-    setApiUrl(defaultApiUrl);
+    runDiagnostics();
   }, []);
 
-  const runDiagnostic = async () => {
-    setLoading(true);
-    setDiagnosticResults(null);
+  const getStatusIcon = (status) => {
+    if (status === null) return <FaQuestion style={{ color: '#999' }} />;
+    if (status === true) return <FaCheckCircle style={{ color: 'green' }} />;
+    return <FaTimesCircle style={{ color: 'red' }} />;
+  };
+
+  const getStatusText = (key, status) => {
+    if (status === null) return 'Checking...';
     
-    const results = {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'unknown',
-      apiUrl: apiUrl,
-      endpoints: {},
-      localStorage: {
-        token: localStorage.getItem('token') ? 'Present' : 'Not present',
-        userData: localStorage.getItem('userData') ? 'Present' : 'Not present',
+    const statusTexts = {
+      internetConnection: {
+        true: 'Internet connection is active',
+        false: 'No internet connection detected'
       },
-      cors: 'Testing...',
-      network: 'Testing...',
-      apiAvailable: false
+      apiConnection: {
+        true: 'API server is reachable',
+        false: 'Cannot connect to API server'
+      },
+      corsStatus: {
+        supported: 'CORS is properly configured',
+        limited: 'CORS has limited support',
+        restricted: 'CORS is restricted',
+        unknown: 'CORS status unknown',
+        error: 'CORS check failed'
+      },
+      cookiesEnabled: {
+        true: 'Cookies are enabled',
+        false: 'Cookies are disabled'
+      },
+      localStorageAccess: {
+        true: 'LocalStorage is accessible',
+        false: 'Cannot access LocalStorage'
+      }
     };
-
-    // Test API endpoints
-    const endpoints = [
-      { name: 'Login', path: '/auth/login', method: 'POST' }, // Changed from GET to POST
-      { name: 'Users', path: '/users', method: 'GET' },
-      { name: 'Health', path: '/health', method: 'GET' }
-    ];
-
-    try {
-      // Test network connectivity
-      const networkTest = await fetch('https://www.google.com', { 
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-cache'
-      });
-      results.network = networkTest.type === 'opaque' ? 'Connected' : 'Issue detected';
-      
-      // Test CORS configuration
-      try {
-        const corsTest = await fetch(apiUrl, { 
-          method: 'OPTIONS',
-          cache: 'no-cache'
-        });
-        results.cors = corsTest.ok ? 'CORS configured correctly' : `CORS issue: ${corsTest.status}`;
-      } catch (error) {
-        results.cors = `CORS error: ${error.message}`;
-      }
-
-      // Test individual endpoints
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(`${apiUrl}${endpoint.path}`, {
-            method: endpoint.method,
-            headers: {
-              'Content-Type': 'application/json',
-              // Include auth token if available
-              ...(localStorage.getItem('token') ? { 
-                'Authorization': `Bearer ${localStorage.getItem('token')}` 
-              } : {})
-            },
-            cache: 'no-cache'
-          });
-
-          results.endpoints[endpoint.name] = {
-            status: response.status,
-            ok: response.ok,
-            statusText: response.statusText,
-          };
-
-          // If any endpoint responds, API is available
-          if (response.ok) {
-            results.apiAvailable = true;
-          }
-        } catch (error) {
-          results.endpoints[endpoint.name] = {
-            error: error.message,
-            status: 'Error',
-            ok: false
-          };
-        }
-      }
-    } catch (error) {
-      results.network = `Network error: ${error.message}`;
-    }
-
-    setDiagnosticResults(results);
-    setLoading(false);
-  };
-
-  const handleTestLogin = async (e) => {
-    e.preventDefault();
-    setTestLoginResult(null);
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testCredentials),
-        cache: 'no-cache'
-      });
-
-      // First check if there's actually content to parse
-      const contentType = response.headers.get("content-type");
-      let data = {};
-      
-      if (contentType && contentType.includes("application/json") && response.status !== 204) {
-        const text = await response.text();
-        // Only try to parse if there's actual content
-        if (text && text.trim()) {
-          try {
-            data = JSON.parse(text);
-          } catch (parseError) {
-            console.error("JSON parse error:", parseError, "Response text:", text);
-            data = { message: `Invalid JSON response: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}` };
-          }
-        }
-      }
-
-      setTestLoginResult({
-        success: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-        method: 'POST',
-        message: response.ok 
-          ? 'Login successful' 
-          : response.status === 405 
-            ? `Login failed: Method not allowed. The API might require a different HTTP method.`
-            : `Login failed: ${data.message || response.statusText}`,
-        data: response.ok ? data : null
-      });
-    } catch (error) {
-      setTestLoginResult({
-        success: false,
-        message: `Login attempt error: ${error.message}`,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearLocalStorage = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    alert('Local storage auth data cleared');
-    runDiagnostic();
-  };
-
-  const formatResults = (results) => {
-    return JSON.stringify(results, null, 2);
+    
+    return statusTexts[key][status] || `Status: ${status}`;
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Login System Diagnostic</h1>
+    <div style={{
+      margin: '20px auto',
+      maxWidth: '600px',
+      padding: '15px',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      backgroundColor: '#f9f9f9'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '10px'
+      }}>
+        <h3 style={{ margin: '0', fontSize: '16px' }}>Connection Diagnostic Tool</h3>
+        <button 
+          onClick={runDiagnostics} 
+          disabled={isRunning}
+          style={{
+            background: 'none',
+            border: '1px solid #ccc',
+            padding: '5px 10px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '12px'
+          }}
+        >
+          {isRunning ? (
+            <>
+              <FaSync className="spinner" /> Running...
+            </>
+          ) : (
+            <>
+              <FaSync /> Run Tests
+            </>
+          )}
+        </button>
+      </div>
+
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          {getStatusIcon(diagnosticResults.internetConnection)}
+          <span>{getStatusText('internetConnection', diagnosticResults.internetConnection)}</span>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          {getStatusIcon(diagnosticResults.apiConnection)}
+          <span>{getStatusText('apiConnection', diagnosticResults.apiConnection)}</span>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          {getStatusIcon(diagnosticResults.corsStatus === 'supported' || diagnosticResults.corsStatus === 'limited')}
+          <span>{getStatusText('corsStatus', diagnosticResults.corsStatus)}</span>
+        </div>
+      </div>
       
-      <div className="mb-6">
-        <label className="block mb-2 font-semibold">API URL</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={apiUrl}
-            onChange={(e) => setApiUrl(e.target.value)}
-            className="flex-1 p-2 border rounded"
-            placeholder="API URL"
-          />
-          <button
-            onClick={runDiagnostic}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-          >
-            {loading ? 'Running...' : 'Run Diagnostic'}
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">Auth Tools</h2>
-        </div>
-        
-        <div className="flex gap-4 mb-4">
-          <button
-            onClick={clearLocalStorage}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Clear Auth Data
-          </button>
-          
-          <button
-            onClick={() => setShowTestLogin(!showTestLogin)}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            {showTestLogin ? 'Hide Test Login' : 'Show Test Login'}
-          </button>
-        </div>
-        
-        {showTestLogin && (
-          <div className="p-4 border rounded-lg bg-gray-50">
-            <h3 className="font-semibold mb-2">Test Login</h3>
-            <form onSubmit={handleTestLogin}>
-              <div className="mb-3">
-                <label className="block mb-1 text-sm">Email</label>
-                <input
-                  type="email"
-                  value={testCredentials.email}
-                  onChange={(e) => setTestCredentials({...testCredentials, email: e.target.value})}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="block mb-1 text-sm">Password</label>
-                <input
-                  type="password"
-                  value={testCredentials.password}
-                  onChange={(e) => setTestCredentials({...testCredentials, password: e.target.value})}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-              >
-                {loading ? 'Testing...' : 'Test Login'}
-              </button>
-            </form>
-            
-            {testLoginResult && (
-              <div className={`mt-4 p-3 rounded ${testLoginResult.success ? 'bg-green-100' : 'bg-red-100'}`}>
-                <p className="font-semibold">{testLoginResult.message}</p>
-                {testLoginResult.data && (
-                  <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
-                    {JSON.stringify(testLoginResult.data, null, 2)}
-                  </pre>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {diagnosticResults && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Diagnostic Results</h2>
-          <div className="mb-4">
-            <span className={`px-3 py-1 rounded-full text-sm ${diagnosticResults.apiAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              API Status: {diagnosticResults.apiAvailable ? 'Available' : 'Unavailable'}
-            </span>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          background: 'none',
+          border: 'none',
+          textDecoration: 'underline',
+          color: '#555',
+          cursor: 'pointer',
+          padding: '5px 0',
+          fontSize: '12px',
+          display: 'block',
+          width: '100%',
+          textAlign: 'center'
+        }}
+      >
+        {expanded ? 'Show Less' : 'Show More Details'}
+      </button>
+      
+      {expanded && (
+        <div style={{ marginTop: '10px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            {getStatusIcon(diagnosticResults.cookiesEnabled)}
+            <span>{getStatusText('cookiesEnabled', diagnosticResults.cookiesEnabled)}</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="p-3 border rounded bg-gray-50">
-              <h3 className="font-semibold">Network</h3>
-              <p>{diagnosticResults.network}</p>
-            </div>
-            <div className="p-3 border rounded bg-gray-50">
-              <h3 className="font-semibold">CORS</h3>
-              <p>{diagnosticResults.cors}</p>
-            </div>
-            <div className="p-3 border rounded bg-gray-50">
-              <h3 className="font-semibold">Local Storage</h3>
-              <p>Token: {diagnosticResults.localStorage.token}</p>
-              <p>User Data: {diagnosticResults.localStorage.userData}</p>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            {getStatusIcon(diagnosticResults.localStorageAccess)}
+            <span>{getStatusText('localStorageAccess', diagnosticResults.localStorageAccess)}</span>
           </div>
           
-          <h3 className="font-semibold mb-2">Endpoint Tests</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {Object.entries(diagnosticResults.endpoints).map(([name, result]) => (
-              <div key={name} className="p-3 border rounded bg-gray-50">
-                <h4 className="font-semibold">{name}</h4>
-                <p className={result.ok ? 'text-green-600' : 'text-red-600'}>
-                  Status: {result.status} {result.statusText && `(${result.statusText})`}
-                </p>
-                {result.error && <p className="text-red-600 text-sm">{result.error}</p>}
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-4">
-            <h3 className="font-semibold mb-2">Raw Results</h3>
-            <pre className="p-4 bg-gray-800 text-green-400 rounded-lg text-xs overflow-auto">
-              {formatResults(diagnosticResults)}
-            </pre>
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
+            <div style={{ fontSize: '12px', marginBottom: '5px', fontWeight: 'bold' }}>Connection Information:</div>
+            <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '12px' }}>
+              <li>API URL: https://grant-api.onrender.com</li>
+              <li>Browser: {navigator.userAgent}</li>
+              <li>Frontend URL: {window.location.origin}</li>
+              <li>Date/Time: {new Date().toLocaleString()}</li>
+            </ul>
           </div>
         </div>
       )}
