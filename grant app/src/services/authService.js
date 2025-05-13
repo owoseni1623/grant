@@ -7,7 +7,7 @@ import axios from 'axios';
 // Create axios instance with proper configuration
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://grant-api.onrender.com',
-  withCredentials: true,
+  withCredentials: false,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
