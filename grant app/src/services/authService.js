@@ -2,16 +2,16 @@ import axios from 'axios';
 
 // Force use of the correct API URL regardless of environment
 // This is the URL that works based on your Postman tests
-const API_BASE_URL = 'https://grant-api.onrender.com';
+// const API_BASE_URL = 'https://grant-api.onrender.com';
 
 // Create axios instance with proper configuration
-const apiClient = axios.create({
-  baseURL: API_BASE_URL, 
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'https://grant-api.onrender.com',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  withCredentials: false // Changed to false to avoid CORS issues with credentials
+  }
 });
 
 // Add request interceptor to include token in requests
