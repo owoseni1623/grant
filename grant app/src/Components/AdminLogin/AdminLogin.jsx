@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaSpinner, FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { useUsGrantContext } from '../../Context/UsGrantContext';
-import { authService } from '../../services/authService';
+import { useRegisterGrant } from '../../Context/RegisterGrantContext';
 import { useNotification, NotificationType } from '../../Context/NotificationContext';
 import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
+  // Local state
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -22,9 +22,10 @@ const AdminLogin = () => {
     testing: false
   });
   const [showDiagnostic, setShowDiagnostic] = useState(false);
+  
+  // Hooks
   const navigate = useNavigate();
-
-  const { adminLogin, isAuthenticated, setError: setContextError } = useUsGrantContext();
+  const { adminLogin, updateAdminLoginForm, isAuthenticated, user, loading: contextLoading, error: contextError, success: contextSuccess } = useRegisterGrant();
   const { addNotification } = useNotification();
 
   // Check network connectivity
@@ -41,24 +42,52 @@ const AdminLogin = () => {
     };
   }, []);
 
+  // Check if already logged in as admin
   useEffect(() => {
-    // Check if already logged in as admin
     try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (isAuthenticated && userData.role === 'ADMIN') {
+      if (isAuthenticated && user?.role === 'ADMIN') {
         console.log('Already logged in as admin, redirecting to dashboard');
         navigate('/admin/dashboard');
       }
     } catch (e) {
       console.error('Error checking admin status:', e);
     }
-  }, [navigate, isAuthenticated]);
+  }, [navigate, isAuthenticated, user]);
+
+  // Update context when form data changes
+  useEffect(() => {
+    updateAdminLoginForm(formData);
+  }, [formData, updateAdminLoginForm]);
+
+  // Watch for context error updates
+  useEffect(() => {
+    if (contextError) {
+      setError(contextError);
+    }
+  }, [contextError]);
+
+  // Watch for loading state from context
+  useEffect(() => {
+    setLoading(contextLoading);
+  }, [contextLoading]);
+
+  // Watch for success from context
+  useEffect(() => {
+    if (contextSuccess) {
+      setSuccess('Login successful! Redirecting to admin dashboard...');
+      addNotification('Admin login successful!', NotificationType.SUCCESS);
+      
+      setTimeout(() => {
+        navigate('/admin/dashboard');
+      }, 1000);
+    }
+  }, [contextSuccess, addNotification, navigate]);
 
   // Test API connectivity
   const testApiConnection = async () => {
     setNetworkStatus(prev => ({ ...prev, testing: true }));
     try {
-      const apiUrl = 'https://grant-api.onrender.com';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://grant-api.onrender.com';
       const testUrl = `${apiUrl}/api/auth/admin/login`; // Use a real admin endpoint
       
       setDebugInfo(`Testing connection to admin endpoint at ${apiUrl}...`);
@@ -98,7 +127,6 @@ const AdminLogin = () => {
     setError('');
     setSuccess('');
     setDebugInfo(null);
-    setContextError && setContextError(null);
     
     const { email, password } = formData;
     
@@ -114,67 +142,21 @@ const AdminLogin = () => {
       return;
     }
     
+    // Additional validation
+    if (!isValidEmail() || !isValidPassword()) {
+      setError('Please check your email and password format');
+      return;
+    }
+    
     try {
-      setLoading(true);
-      setDebugInfo('Attempting admin login with direct service call...');
-      
-      try {
-        // Use the authService directly
-        const userData = await authService.adminLogin(email, password);
-        
-        if (!userData || !userData.token) {
-          throw new Error('Invalid response from server - missing authentication token');
-        }
-        
-        // Store admin session data
-        localStorage.setItem('userData', JSON.stringify({
-          id: userData._id,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          email: userData.email,
-          role: userData.role || 'ADMIN'
-        }));
-        
-        // Store token
-        localStorage.setItem('token', userData.token);
-        
-        setSuccess('Login successful! Redirecting to admin dashboard...');
-        setDebugInfo('Login successful via direct service call');
-        addNotification('Admin login successful!', NotificationType.SUCCESS);
-        
-        // Navigate to admin dashboard
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 1000);
-        return;
-      } catch (serviceErr) {
-        // If direct service call fails
-        setDebugInfo(`Direct service call failed: ${serviceErr.message}`);
-        console.error('Admin login failed with direct service call:', serviceErr);
-        
-        // Fallback to context-based login
-        setDebugInfo('Trying context-based admin login...');
-        const success = await adminLogin(email, password);
-        
-        if (success) {
-          setSuccess('Login successful! Redirecting to admin dashboard...');
-          addNotification('Admin login successful!', NotificationType.SUCCESS);
-          setTimeout(() => {
-            navigate('/admin/dashboard');
-          }, 1000);
-          return;
-        } else {
-          throw new Error('Admin login failed. Please verify your credentials.');
-        }
-      }
+      setDebugInfo('Attempting admin login with context...');
+      await adminLogin(e);
     } catch (err) {
       console.error('Admin login failed:', err);
       setDebugInfo(`Login failed: ${err.message}`);
       const errorMessage = err.message || 'Login failed. Please verify your admin credentials.';
       setError(errorMessage);
       addNotification(errorMessage, NotificationType.ERROR);
-    } finally {
-      setLoading(false);
     }
   };
 

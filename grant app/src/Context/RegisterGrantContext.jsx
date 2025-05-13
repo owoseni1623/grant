@@ -36,6 +36,13 @@ export const ACTION_TYPES = {
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   SET_SUCCESS: 'SET_SUCCESS',
+  SET_LOGIN_FORM: 'SET_LOGIN_FORM',
+  SET_ADMIN_LOGIN_FORM: 'SET_ADMIN_LOGIN_FORM',
+  SET_LOGIN_ERRORS: 'SET_LOGIN_ERRORS',
+  SET_ADMIN_LOGIN_ERRORS: 'SET_ADMIN_LOGIN_ERRORS',
+  SET_AUTH_USER: 'SET_AUTH_USER',
+  SET_IS_AUTHENTICATED: 'SET_IS_AUTHENTICATED',
+  LOGOUT: 'LOGOUT',
 };
 
 // Initial State - Ensure all form fields have string default values
@@ -49,14 +56,26 @@ const initialState = {
     password: '',
     confirmPassword: '',
   },
+  loginForm: {
+    email: '',
+    password: '',
+  },
+  adminLoginForm: {
+    email: '',
+    password: '',
+  },
   errors: {},
+  loginErrors: {},
+  adminLoginErrors: {},
   loading: false,
   error: null,
   success: false,
+  user: null,
+  isAuthenticated: false,
 };
 
 // Reducer
-function registrationReducer(state, action) {
+function authReducer(state, action) {
   switch (action.type) {
     case ACTION_TYPES.UPDATE_FORM:
       return {
@@ -66,14 +85,42 @@ function registrationReducer(state, action) {
           ...action.payload,
         },
       };
+    case ACTION_TYPES.SET_LOGIN_FORM:
+      return {
+        ...state,
+        loginForm: {
+          ...state.loginForm,
+          ...action.payload,
+        },
+      };
+    case ACTION_TYPES.SET_ADMIN_LOGIN_FORM:
+      return {
+        ...state,
+        adminLoginForm: {
+          ...state.adminLoginForm,
+          ...action.payload,
+        },
+      };
     case ACTION_TYPES.SET_REGISTRATION_ERRORS:
       return {
         ...state,
         errors: action.payload,
       };
+    case ACTION_TYPES.SET_LOGIN_ERRORS:
+      return {
+        ...state,
+        loginErrors: action.payload,
+      };
+    case ACTION_TYPES.SET_ADMIN_LOGIN_ERRORS:
+      return {
+        ...state,
+        adminLoginErrors: action.payload,
+      };
     case ACTION_TYPES.CLEAR_FORM:
       return {
-        ...initialState,
+        ...state,
+        formData: initialState.formData,
+        errors: {},
       };
     case ACTION_TYPES.SET_LOADING:
       return {
@@ -92,6 +139,23 @@ function registrationReducer(state, action) {
         success: action.payload,
         error: null,
       };
+    case ACTION_TYPES.SET_AUTH_USER:
+      return {
+        ...state,
+        user: action.payload,
+        isAuthenticated: !!action.payload,
+      };
+    case ACTION_TYPES.SET_IS_AUTHENTICATED:
+      return {
+        ...state,
+        isAuthenticated: action.payload,
+      };
+    case ACTION_TYPES.LOGOUT:
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
+      };
     default:
       return state;
   }
@@ -102,12 +166,47 @@ export const RegisterGrantContext = createContext();
 
 // Provider Component
 export const RegisterGrantProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(registrationReducer, initialState);
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  // Check for existing authentication on mount
+  React.useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('userData');
+      
+      if (token && userData) {
+        try {
+          const user = JSON.parse(userData);
+          dispatch({ type: ACTION_TYPES.SET_AUTH_USER, payload: user });
+        } catch (error) {
+          console.error('Error parsing user data from localStorage', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+        }
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   const updateForm = useCallback((updates) => {
     dispatch({ 
       type: ACTION_TYPES.UPDATE_FORM, 
       payload: updates 
+    });
+  }, []);
+  
+  const updateLoginForm = useCallback((updates) => {
+    dispatch({
+      type: ACTION_TYPES.SET_LOGIN_FORM,
+      payload: updates
+    });
+  }, []);
+  
+  const updateAdminLoginForm = useCallback((updates) => {
+    dispatch({
+      type: ACTION_TYPES.SET_ADMIN_LOGIN_FORM,
+      payload: updates
     });
   }, []);
 
@@ -145,23 +244,23 @@ export const RegisterGrantProvider = ({ children }) => {
         }
         break;
         
-        case 'primaryPhone':
-          if (!value) {
-            errors[name] = 'Primary phone is required';
-          } else if (!validators.isValidPhone(value)) {
-            errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
-          } else {
-            delete errors[name];
-          }
-          break;
+      case 'primaryPhone':
+        if (!value) {
+          errors[name] = 'Primary phone is required';
+        } else if (!validators.isValidPhone(value)) {
+          errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
+        } else {
+          delete errors[name];
+        }
+        break;
 
-        case 'mobilePhone':
-          if (value && !validators.isValidPhone(value)) {
-            errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
-          } else {
-            delete errors[name];
-          }
-          break;
+      case 'mobilePhone':
+        if (value && !validators.isValidPhone(value)) {
+          errors[name] = 'Please enter a valid phone number with country code (e.g., +234 for Nigeria)';
+        } else {
+          delete errors[name];
+        }
+        break;
         
       case 'password':
         if (!value) {
@@ -203,6 +302,74 @@ export const RegisterGrantProvider = ({ children }) => {
 
     return Object.keys(errors).length === 0;
   }, [state.formData]);
+  
+  // Login form validation
+  const validateLoginField = useCallback((name, value) => {
+    const errors = { ...state.loginErrors };
+    
+    switch (name) {
+      case 'email':
+        if (!value) {
+          errors[name] = 'Email is required';
+        } else if (!validators.isValidEmail(value)) {
+          errors[name] = 'Please enter a valid email address';
+        } else {
+          delete errors[name];
+        }
+        break;
+        
+      case 'password':
+        if (!value) {
+          errors[name] = 'Password is required';
+        } else if (value.length < 6) {
+          errors[name] = 'Password must be at least 6 characters long';
+        } else {
+          delete errors[name];
+        }
+        break;
+    }
+    
+    dispatch({
+      type: ACTION_TYPES.SET_LOGIN_ERRORS,
+      payload: errors
+    });
+    
+    return Object.keys(errors).length === 0;
+  }, [state.loginErrors]);
+  
+  // Admin login form validation
+  const validateAdminLoginField = useCallback((name, value) => {
+    const errors = { ...state.adminLoginErrors };
+    
+    switch (name) {
+      case 'email':
+        if (!value) {
+          errors[name] = 'Email is required';
+        } else if (!validators.isValidEmail(value)) {
+          errors[name] = 'Please enter a valid email address';
+        } else {
+          delete errors[name];
+        }
+        break;
+        
+      case 'password':
+        if (!value) {
+          errors[name] = 'Password is required';
+        } else if (value.length < 6) {
+          errors[name] = 'Password must be at least 6 characters long';
+        } else {
+          delete errors[name];
+        }
+        break;
+    }
+    
+    dispatch({
+      type: ACTION_TYPES.SET_ADMIN_LOGIN_ERRORS,
+      payload: errors
+    });
+    
+    return Object.keys(errors).length === 0;
+  }, [state.adminLoginErrors]);
 
   const handleRegisterSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -300,8 +467,165 @@ export const RegisterGrantProvider = ({ children }) => {
     }
   }, [state.formData, validateField]);
 
+  // User login function 
+  const login = useCallback(async (e) => {
+    if (e) e.preventDefault();
+    
+    // Reset previous states
+    dispatch({ type: ACTION_TYPES.SET_ERROR, payload: null });
+    dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: false });
+    
+    // Validate login form fields
+    let isValid = true;
+    const loginFields = ['email', 'password'];
+    
+    loginFields.forEach(field => {
+      const fieldValue = state.loginForm[field];
+      if (!validateLoginField(field, fieldValue)) {
+        isValid = false;
+      }
+    });
+    
+    if (!isValid) {
+      return false;
+    }
+    
+    try {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      
+      // Make login request
+      const response = await axiosInstance.post('/api/auth/login', {
+        email: state.loginForm.email,
+        password: state.loginForm.password
+      });
+      
+      const userData = response.data;
+      
+      if (!userData || !userData.token) {
+        throw new Error('Invalid response from server - missing authentication token');
+      }
+      
+      // Store user data in localStorage
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('userData', JSON.stringify({
+        id: userData._id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        role: userData.role
+      }));
+      
+      // Update state
+      dispatch({ type: ACTION_TYPES.SET_AUTH_USER, payload: userData });
+      dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: true });
+      
+      return true;
+    } catch (error) {
+      console.error('Login Error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      
+      dispatch({ 
+        type: ACTION_TYPES.SET_ERROR, 
+        payload: errorMessage 
+      });
+      
+      return false;
+    } finally {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: false });
+    }
+  }, [state.loginForm, validateLoginField]);
+  
+  // Admin login function
+  const adminLogin = useCallback(async (e) => {
+    if (e) e.preventDefault();
+    
+    // Reset previous states
+    dispatch({ type: ACTION_TYPES.SET_ERROR, payload: null });
+    dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: false });
+    
+    // Validate admin login form fields
+    let isValid = true;
+    const adminLoginFields = ['email', 'password'];
+    
+    adminLoginFields.forEach(field => {
+      const fieldValue = state.adminLoginForm[field];
+      if (!validateAdminLoginField(field, fieldValue)) {
+        isValid = false;
+      }
+    });
+    
+    if (!isValid) {
+      return false;
+    }
+    
+    try {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      
+      // Make admin login request
+      const response = await axiosInstance.post('/api/auth/admin/login', {
+        email: state.adminLoginForm.email,
+        password: state.adminLoginForm.password
+      });
+      
+      const userData = response.data;
+      
+      if (!userData || !userData.token) {
+        throw new Error('Invalid response from server - missing authentication token');
+      }
+      
+      // Check if user is admin
+      if (userData.role !== 'ADMIN') {
+        throw new Error('Access denied. Admin privileges required.');
+      }
+      
+      // Store admin data in localStorage
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('userData', JSON.stringify({
+        id: userData._id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        role: userData.role
+      }));
+      
+      // Update state
+      dispatch({ type: ACTION_TYPES.SET_AUTH_USER, payload: userData });
+      dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: true });
+      
+      return true;
+    } catch (error) {
+      console.error('Admin Login Error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || 'Admin login failed. Please verify your credentials.';
+      
+      dispatch({ 
+        type: ACTION_TYPES.SET_ERROR, 
+        payload: errorMessage 
+      });
+      
+      return false;
+    } finally {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: false });
+    }
+  }, [state.adminLoginForm, validateAdminLoginField]);
+  
+  // Logout function
+  const logout = useCallback(() => {
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    
+    // Update state
+    dispatch({ type: ACTION_TYPES.LOGOUT });
+    
+    return true;
+  }, []);
+
   const clearRegistrationForm = useCallback(() => {
     dispatch({ type: ACTION_TYPES.CLEAR_FORM });
+  }, []);
+  
+  const setError = useCallback((errorMessage) => {
+    dispatch({ type: ACTION_TYPES.SET_ERROR, payload: errorMessage });
   }, []);
 
   return (
@@ -310,9 +634,22 @@ export const RegisterGrantProvider = ({ children }) => {
         state,
         dispatch,
         updateForm,
+        updateLoginForm,
+        updateAdminLoginForm,
         validateField,
+        validateLoginField,
+        validateAdminLoginField,
         handleRegisterSubmit,
-        clearRegistrationForm
+        login,
+        adminLogin,
+        logout,
+        clearRegistrationForm,
+        setError,
+        isAuthenticated: state.isAuthenticated,
+        user: state.user,
+        loading: state.loading,
+        error: state.error,
+        success: state.success
       }}
     >
       {children}

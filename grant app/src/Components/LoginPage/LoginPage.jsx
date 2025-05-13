@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification, NotificationType } from '../../Context/NotificationContext';
-import { useUsGrantContext } from '../../Context/UsGrantContext';
-import { authService } from '../../services/authService';
+import { useRegisterGrant } from '../../Context/RegisterGrantContext';
 import { 
   FaUser, 
   FaLock, 
@@ -16,6 +15,7 @@ import './LoginPage.css';
 import LoginDiagnostic from '../LoginDiagnostic/LoginDiagnostic';
 
 const LoginPage = () => {
+  // State variables
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,9 +29,10 @@ const LoginPage = () => {
     apiStatus: null
   });
   const [showDiagnostic, setShowDiagnostic] = useState(false);
+  
+  // Hooks
   const { addNotification } = useNotification();
-
-  const { login, isAuthenticated, setError: setContextError } = useUsGrantContext();
+  const { login, updateLoginForm, isAuthenticated, user, loading, error: contextError, success } = useRegisterGrant();
   const navigate = useNavigate();
 
   // Check network connectivity
@@ -53,16 +54,40 @@ const LoginPage = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
+
+  // Watch for context error updates
+  useEffect(() => {
+    if (contextError) {
+      setError(contextError);
+    }
+  }, [contextError]);
+
+  // Watch for context success
+  useEffect(() => {
+    if (success) {
+      setSuccessMessage('Login successful! Redirecting...');
+      addNotification('Login successful!', NotificationType.SUCCESS);
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+    }
+  }, [success, addNotification, navigate]);
+
+  // Update form values in context when local state changes
+  useEffect(() => {
+    updateLoginForm({ email, password });
+  }, [email, password, updateLoginForm]);
 
   // Test API connectivity
   const testApiConnection = async () => {
     setNetworkStatus(prev => ({ ...prev, testing: true }));
     try {
-      const apiUrl = 'https://grant-api.onrender.com';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://grant-api.onrender.com';
       const testUrl = `${apiUrl}/api/health`;
       
       setDebugInfo(`Testing connection to ${testUrl}...`);
@@ -117,78 +142,28 @@ const LoginPage = () => {
     setError('');
     setSuccessMessage('');
     setDebugInfo('');
-    setContextError && setContextError(null);
-    setIsLoading(true);
-
+    
     // Validate network connection first
     if (!navigator.onLine) {
       setError('You appear to be offline. Please check your internet connection and try again.');
-      setIsLoading(false);
       return;
     }
 
+    // Validation checks
+    if (!isValidEmail() || !isValidPassword()) {
+      setError('Please check your email and password');
+      return;
+    }
+
+    setDebugInfo('Attempting login via RegisterGrantContext...');
+    
     try {
-      // Try direct service login first using the improved service
-      setDebugInfo('Attempting login via direct service call...');
-      
-      try {
-        const userData = await authService.login(email, password);
-        
-        if (!userData || !userData.token) {
-          throw new Error('Invalid response from server - missing authentication token');
-        }
-        
-        // Update localStorage
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('userData', JSON.stringify({
-          id: userData._id,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          email: userData.email,
-          role: userData.role
-        }));
-        
-        setSuccessMessage('Login successful! Redirecting...');
-        addNotification('Login successful!', NotificationType.SUCCESS);
-        setDebugInfo('Login successful via direct service');
-        
-        // Sync with context
-        try {
-          await login(email, password);
-        } catch (loginErr) {
-          console.log('Context login failed but user is authenticated', loginErr);
-          // Continue anyway since direct login worked
-        }
-        
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
-        return;
-      } catch (serviceErr) {
-        setDebugInfo(`Direct service login failed: ${serviceErr.message}`);
-        console.error('Direct service login failed:', serviceErr);
-        
-        // Fallback to context-based login
-        setDebugInfo('Trying context-based login...');
-        const success = await login(email, password, navigate);
-        
-        if (success) {
-          setSuccessMessage('Login successful! Redirecting...');
-          addNotification('Login successful!', NotificationType.SUCCESS);
-          setTimeout(() => {
-            navigate('/');
-          }, 1000);
-          return;
-        } else {
-          throw new Error('Login failed. Please check your credentials.');
-        }
-      }
+      // Use the login function from context
+      await login(e);
     } catch (err) {
       const errorMessage = err.message || 'Invalid credentials. Please try again.';
       setError(errorMessage);
       addNotification(errorMessage, NotificationType.ERROR);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -271,10 +246,10 @@ const LoginPage = () => {
           <div className="form-actions">
             <button 
               type="submit" 
-              disabled={isLoading || (email && !isValidEmail()) || (password && !isValidPassword())} 
-              className={`login-button ${isLoading ? 'loading' : ''}`}
+              disabled={loading || (email && !isValidEmail()) || (password && !isValidPassword())} 
+              className={`login-button ${loading ? 'loading' : ''}`}
             >
-              {isLoading ? (
+              {loading ? (
                 <>
                   <FaSpinner className="spinner" /> Logging In...
                 </>
