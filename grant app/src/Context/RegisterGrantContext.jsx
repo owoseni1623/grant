@@ -1,25 +1,21 @@
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import axios from 'axios';
 
-// Configure axios for the entire application with dynamic base URL detection
-// Update the getBaseURL function in your RegisterGrantContext.js file
+// Configure axios with fixed backend URL
+const API_URL = 'https://grant-api.onrender.com';
 
-const getBaseURL = () => {
-  // Always use the backend API URL regardless of environment
-  return 'https://grant-api.onrender.com';
-};
-
-// Update your axios instance configuration
+// Create a dedicated axios instance with consistent configuration
 const axiosInstance = axios.create({
-  baseURL: getBaseURL(),
-  withCredentials: true,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  }
+  },
+  // Don't use credentials by default as it can cause CORS issues
+  withCredentials: false
 });
 
-// Add CORS handling interceptor
+// Add token interceptor
 axiosInstance.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token');
@@ -34,10 +30,10 @@ axiosInstance.interceptors.request.use(
 // Validators
 const validators = {
   isValidEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-  formatPhone: (phone) => phone.replace(/[^\d+]/g, ''), // Updated to keep + symbol
+  formatPhone: (phone) => phone.replace(/[^\d+]/g, ''),
   isValidPhone: (phone) => {
     const cleaned = phone.replace(/[^\d+]/g, '');
-    return /^\+?\d{1,4}\d{6,15}$/.test(cleaned); // Allow country code + phone number
+    return /^\+?\d{1,4}\d{6,15}$/.test(cleaned);
   },
   isValidPassword: (password) => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -65,7 +61,7 @@ export const ACTION_TYPES = {
   LOGOUT: 'LOGOUT',
 };
 
-// Initial State - Ensure all form fields have string default values
+// Initial State
 const initialState = {
   formData: {
     firstName: '',
@@ -198,14 +194,17 @@ export const RegisterGrantProvider = ({ children }) => {
         try {
           const user = JSON.parse(userData);
           
-          // Verify token validity with backend
+          // Set auth user directly from localStorage to avoid unnecessary API call
+          dispatch({ type: ACTION_TYPES.SET_AUTH_USER, payload: user });
+          
+          // Optional: Verify token validity with backend
           try {
             await axiosInstance.get('/api/auth/verify-token');
-            dispatch({ type: ACTION_TYPES.SET_AUTH_USER, payload: user });
           } catch (error) {
             console.warn('Token verification failed, logging out');
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
+            dispatch({ type: ACTION_TYPES.LOGOUT });
           }
         } catch (error) {
           console.error('Error parsing user data from localStorage', error);
@@ -407,7 +406,7 @@ export const RegisterGrantProvider = ({ children }) => {
     dispatch({ type: ACTION_TYPES.SET_ERROR, payload: null });
     dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: false });
       
-    // More comprehensive client-side validation
+    // Field validation
     const fieldsToValidate = [
       'firstName', 'lastName', 'email', 'primaryPhone', 
       'password', 'confirmPassword'
@@ -449,7 +448,7 @@ export const RegisterGrantProvider = ({ children }) => {
     const submitData = {
       firstName: state.formData.firstName.trim(),
       lastName: state.formData.lastName.trim(),
-      email: state.formData.email.trim().toLowerCase(), // Ensure email is lowercase
+      email: state.formData.email.trim().toLowerCase(),
       primaryPhone: validators.formatPhone(state.formData.primaryPhone),
       mobilePhone: state.formData.mobilePhone 
         ? validators.formatPhone(state.formData.mobilePhone) 
@@ -460,16 +459,15 @@ export const RegisterGrantProvider = ({ children }) => {
   
     try {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
-        
-      // Debug log to see what's being sent
-      console.log('Submitting registration data:', JSON.stringify(submitData));
-        
+      
+      console.log('Submitting registration data to:', `${API_URL}/api/auth/register`);
+      
       const response = await axiosInstance.post('/api/auth/register', submitData);
-        
+      
       // Handle successful registration
       dispatch({ type: ACTION_TYPES.CLEAR_FORM });
       dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: true });
-        
+      
       return response.data;
     } catch (error) {
       console.error('Registration Error:', error.response?.data || error.message);
@@ -482,7 +480,6 @@ export const RegisterGrantProvider = ({ children }) => {
       
       // Handle specific field errors from server
       if (error.response?.data?.errors) {
-        // Handle array of errors
         if (Array.isArray(error.response.data.errors)) {
           const serverErrors = error.response.data.errors.reduce((acc, err) => {
             acc[err.field] = err.message;
@@ -494,7 +491,6 @@ export const RegisterGrantProvider = ({ children }) => {
             payload: serverErrors
           });
         } 
-        // Handle object of errors
         else if (typeof error.response.data.errors === 'object') {
           dispatch({
             type: ACTION_TYPES.SET_REGISTRATION_ERRORS,
@@ -509,13 +505,12 @@ export const RegisterGrantProvider = ({ children }) => {
     }
   }, [state.formData, validateField, state.errors]);
 
-  // User login function 
+  // User login function - simplified and made more robust
   const login = useCallback(async (e) => {
     if (e) e.preventDefault();
     
-    // Reset previous states
+    // Reset previous error states
     dispatch({ type: ACTION_TYPES.SET_ERROR, payload: null });
-    dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: false });
     
     // Validate login form fields
     let isValid = true;
@@ -535,28 +530,26 @@ export const RegisterGrantProvider = ({ children }) => {
     try {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       
-      console.log('Attempting login with DIRECT API call to prevent URL issues');
+      // Prepare login data
+      const loginData = {
+        email: state.loginForm.email.toLowerCase(),
+        password: state.loginForm.password
+      };
       
-      // Create a new axios instance specifically for this request to ensure correct URL
-      const loginClient = axios.create({
-        baseURL: 'https://grant-api.onrender.com', 
+      console.log('Attempting login to:', `${API_URL}/api/auth/login`);
+      
+      // Use a direct axios call with explicit configuration
+      const response = await axios({
+        method: 'post',
+        url: `${API_URL}/api/auth/login`,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        withCredentials: false
+        data: loginData
       });
       
-      // Log the full URL to confirm where request is going
-      console.log('Login request URL:', 'https://grant-api.onrender.com/api/auth/login');
-      
-      // Make login request with the dedicated client
-      const response = await loginClient.post('/api/auth/login', {
-        email: state.loginForm.email.toLowerCase(), // Ensure email is lowercase
-        password: state.loginForm.password
-      });
-      
-      console.log('Login response received:', response);
+      console.log('Login response received:', response.status);
       
       const userData = response.data;
       
@@ -582,7 +575,6 @@ export const RegisterGrantProvider = ({ children }) => {
     } catch (error) {
       console.error('Login Error:', error);
       console.error('Login Response Data:', error.response?.data);
-      console.error('Login Request Config:', error.config);
       
       const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
       
@@ -603,7 +595,6 @@ export const RegisterGrantProvider = ({ children }) => {
     
     // Reset previous states
     dispatch({ type: ACTION_TYPES.SET_ERROR, payload: null });
-    dispatch({ type: ACTION_TYPES.SET_SUCCESS, payload: false });
     
     // Validate admin login form fields
     let isValid = true;
@@ -623,10 +614,18 @@ export const RegisterGrantProvider = ({ children }) => {
     try {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       
-      // Make admin login request
-      const response = await axiosInstance.post('/api/auth/admin/login', {
-        email: state.adminLoginForm.email.toLowerCase(), // Ensure email is lowercase
-        password: state.adminLoginForm.password
+      // Use direct axios call for admin login
+      const response = await axios({
+        method: 'post',
+        url: `${API_URL}/api/auth/admin/login`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        data: {
+          email: state.adminLoginForm.email.toLowerCase(),
+          password: state.adminLoginForm.password
+        }
       });
       
       const userData = response.data;
@@ -690,16 +689,6 @@ export const RegisterGrantProvider = ({ children }) => {
     dispatch({ type: ACTION_TYPES.SET_ERROR, payload: errorMessage });
   }, []);
 
-  // For debugging - remove in production
-  const logAuthState = useCallback(() => {
-    console.log('Current Auth State:', {
-      isAuthenticated: state.isAuthenticated,
-      user: state.user,
-      baseURL: getBaseURL(),
-      token: localStorage.getItem('token') ? 'Exists' : 'None'
-    });
-  }, [state.isAuthenticated, state.user]);
-
   return (
     <RegisterGrantContext.Provider 
       value={{
@@ -717,7 +706,6 @@ export const RegisterGrantProvider = ({ children }) => {
         logout,
         clearRegistrationForm,
         setError,
-        logAuthState, // For debugging - remove in production
         isAuthenticated: state.isAuthenticated,
         user: state.user,
         loading: state.loading,

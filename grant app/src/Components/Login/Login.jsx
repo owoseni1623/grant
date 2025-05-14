@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRegisterGrant } from '../../Context/RegisterGrantContext';
 import axios from 'axios';
@@ -11,31 +11,84 @@ export const UserLogin = () => {
     updateLoginForm, 
     validateLoginField, 
     login, 
-    loading,
-    setError
+    loading: contextLoading,
+    setError: setContextError
   } = useRegisterGrant();
   
   const { loginForm, loginErrors } = state;
-  const [localLoading, setLocalLoading] = React.useState(false);
-  const [localError, setLocalError] = React.useState(null);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState(null);
   
+  // Clear errors when component mounts
+  useEffect(() => {
+    setLocalError(null);
+    setContextError(null);
+  }, [setContextError]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     updateLoginForm({ [name]: value });
     validateLoginField(name, value);
   };
 
+  const handleDirectLogin = async () => {
+    try {
+      // API URL and endpoint
+      const API_URL = 'https://grant-api.onrender.com';
+      const endpoint = '/api/auth/login';
+      
+      console.log('Attempting direct login to:', `${API_URL}${endpoint}`);
+      
+      // Create request data
+      const loginData = {
+        email: loginForm.email.toLowerCase(),
+        password: loginForm.password
+      };
+      
+      // Make direct API call with explicit configuration
+      const response = await axios({
+        method: 'post',
+        url: `${API_URL}${endpoint}`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        data: loginData
+      });
+      
+      console.log('Login response received:', response.status);
+      
+      if (response.data && response.data.token) {
+        // Store authentication data in localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userData', JSON.stringify({
+          id: response.data._id,
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          email: response.data.email,
+          role: response.data.role
+        }));
+        
+        return true;
+      } else {
+        throw new Error('Invalid response from server - missing authentication token');
+      }
+    } catch (error) {
+      console.error('Direct login error:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError(null);
     
-    // Validate fields
+    // Validate all fields before submission
     let isValid = true;
     const loginFields = ['email', 'password'];
     
     loginFields.forEach(field => {
-      const fieldValue = loginForm[field];
-      if (!validateLoginField(field, fieldValue)) {
+      if (!validateLoginField(field, loginForm[field])) {
         isValid = false;
       }
     });
@@ -47,68 +100,70 @@ export const UserLogin = () => {
     try {
       setLocalLoading(true);
       
-      // Try to use the context login function first
-      console.log('Attempting login via context function');
-      let success = await login(e);
+      // Try both login methods for redundancy
+      let success = false;
+      let directLoginError = null;
       
-      // If that fails, try a direct API call as backup
+      // First attempt: Try context login method
+      try {
+        console.log('Attempting login via context function');
+        success = await login(e);
+      } catch (contextError) {
+        console.warn('Context login failed:', contextError);
+      }
+      
+      // Second attempt: If context login fails, try direct API call
       if (!success) {
-        console.log('Context login failed, attempting direct API call as fallback');
-        
-        // Create a dedicated axios instance for this request
-        const loginClient = axios.create({
-          baseURL: 'https://grant-api.onrender.com',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: false
-        });
-        
-        // Make the request directly
-        const response = await loginClient.post('/api/auth/login', {
-          email: loginForm.email.toLowerCase(),
-          password: loginForm.password
-        });
-        
-        const userData = response.data;
-        
-        if (userData && userData.token) {
-          // Store user data in localStorage
-          localStorage.setItem('token', userData.token);
-          localStorage.setItem('userData', JSON.stringify({
-            id: userData._id,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            email: userData.email,
-            role: userData.role
-          }));
-          
-          success = true;
+        try {
+          console.log('Attempting direct API login as fallback');
+          success = await handleDirectLogin();
+        } catch (error) {
+          directLoginError = error;
+          console.error('Direct login also failed:', error);
         }
       }
       
       if (success) {
+        console.log('Login successful, redirecting to dashboard');
         // Redirect to user dashboard on successful login
         navigate('/dashboard');
+        return;
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      
+      // If we get here, both login attempts failed
+      const errorMessage = directLoginError?.response?.data?.message || 
+                          'Login failed. Please check your credentials and try again.';
+      
       setLocalError(errorMessage);
-      setError(errorMessage);
+      setContextError(errorMessage);
+      
+    } catch (err) {
+      console.error("Login processing error:", err);
+      const errorMessage = err.response?.data?.message || 
+                          'An unexpected error occurred. Please try again later.';
+      
+      setLocalError(errorMessage);
+      setContextError(errorMessage);
     } finally {
-      setLocalLoading(true);
+      setLocalLoading(false);
     }
   };
+
+  // Determine if any type of loading is happening
+  const isLoading = localLoading || contextLoading;
 
   return (
     <div className="login-container">
       <div className="login-form-container">
         <h2>User Login</h2>
+        
+        {/* Show error messages */}
         {(localError || state.error) && (
-          <div className="error-message">{localError || state.error}</div>
+          <div className="error-message">
+            {localError || state.error}
+          </div>
         )}
+        
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
@@ -120,6 +175,7 @@ export const UserLogin = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               className={loginErrors.email ? 'input-error' : ''}
+              disabled={isLoading}
             />
             {loginErrors.email && <span className="error-text">{loginErrors.email}</span>}
           </div>
@@ -134,6 +190,7 @@ export const UserLogin = () => {
               onChange={handleChange}
               placeholder="Enter your password"
               className={loginErrors.password ? 'input-error' : ''}
+              disabled={isLoading}
             />
             {loginErrors.password && <span className="error-text">{loginErrors.password}</span>}
           </div>
@@ -141,9 +198,9 @@ export const UserLogin = () => {
           <button 
             type="submit" 
             className="submit-button"
-            disabled={loading || localLoading}
+            disabled={isLoading}
           >
-            {(loading || localLoading) ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
 
           <div className="form-links">
@@ -156,80 +213,4 @@ export const UserLogin = () => {
   );
 };
 
-export const AdminLogin = () => {
-  const navigate = useNavigate();
-  const { 
-    state, 
-    updateAdminLoginForm, 
-    validateAdminLoginField, 
-    adminLogin, 
-    loading, 
-    error 
-  } = useRegisterGrant();
-  
-  const { adminLoginForm, adminLoginErrors } = state;
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    updateAdminLoginForm({ [name]: value });
-    validateAdminLoginField(name, value);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const success = await adminLogin(e);
-    if (success) {
-      // Redirect to admin dashboard on successful login
-      navigate('/admin/dashboard');
-    }
-  };
-
-  return (
-    <div className="login-container admin-login">
-      <div className="login-form-container">
-        <h2>Admin Login</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="admin-email">Email Address</label>
-            <input
-              type="email"
-              id="admin-email"
-              name="email"
-              value={adminLoginForm.email}
-              onChange={handleChange}
-              placeholder="Enter admin email"
-              className={adminLoginErrors.email ? 'input-error' : ''}
-            />
-            {adminLoginErrors.email && <span className="error-text">{adminLoginErrors.email}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="admin-password">Password</label>
-            <input
-              type="password"
-              id="admin-password"
-              name="password"
-              value={adminLoginForm.password}
-              onChange={handleChange}
-              placeholder="Enter admin password"
-              className={adminLoginErrors.password ? 'input-error' : ''}
-            />
-            {adminLoginErrors.password && <span className="error-text">{adminLoginErrors.password}</span>}
-          </div>
-
-          <button 
-            type="submit" 
-            className="submit-button admin-submit"
-            disabled={loading}
-          >
-            {loading ? 'Authenticating...' : 'Login as Admin'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Default export for the Login component
 export default UserLogin;
