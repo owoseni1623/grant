@@ -7,6 +7,9 @@ import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import AdminLayout from '../AdminLayout/AdminLayout';
 
+// Import the new login components
+import { UserLogin, AdminLogin } from '../Login/Login';
+
 // ScrollToTop Component
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -40,7 +43,6 @@ import FAQPage from '../FAQPage/FAQPage';
 import GrantAboutUs from '../AboutUs/GrantAboutUs';
 import GrantResources from '../Resources/GrantResources';
 import LatestNewsPage from '../LatestNews/LatestNewsPage';
-import LoginPage from '../LoginPage/LoginPage';
 import ForgotPasswordPage from '../ForgotPasswordPage/ForgotPasswordPage';
 import GrantSuccessPage from '../SuccessPage/GrantSuccessPage';
 import GrantInfoCenter from '../InfoPage/InfoPage';
@@ -49,7 +51,6 @@ import InfoSectionPage from '../InfoPage/InfoPage';
 // Admin Pages
 import AdminPanel from '../AdminPanel/AdminPanel';
 import AdminDashboard from '../admin/AdminDashboard';
-import AdminLogin from '../AdminLogin/AdminLogin';
 
 // User Dashboard
 import UserDashboard from '../UserDashboard/UserDashboard';
@@ -112,7 +113,7 @@ const AppRoutes = () => {
                   <Route path="/about" element={<GrantAboutUs />} />
                   <Route path="/resources" element={<GrantResources />} />
                   <Route path="/news" element={<LatestNewsPage />} />
-                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/login" element={<UserLogin />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/info-session" element={<GrantInfoCenter />} />
                   <Route path="/info-section" element={<InfoSectionPage />} />
