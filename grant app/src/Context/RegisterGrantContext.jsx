@@ -7,12 +7,6 @@ import axios from 'axios';
 const getBaseURL = () => {
   // Always use the backend API URL regardless of environment
   return 'https://grant-api.onrender.com';
-  
-  // Alternative: Use environment detection but with correct URLs
-  // const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  // return isDevelopment 
-  //   ? 'http://localhost:5000' // Your backend development port (adjust if different)
-  //   : 'https://grant-api.onrender.com'; // Production backend API
 };
 
 // Update your axios instance configuration
@@ -541,11 +535,28 @@ export const RegisterGrantProvider = ({ children }) => {
     try {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       
-      // Make login request
-      const response = await axiosInstance.post('/api/auth/login', {
+      console.log('Attempting login with DIRECT API call to prevent URL issues');
+      
+      // Create a new axios instance specifically for this request to ensure correct URL
+      const loginClient = axios.create({
+        baseURL: 'https://grant-api.onrender.com', 
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        withCredentials: false
+      });
+      
+      // Log the full URL to confirm where request is going
+      console.log('Login request URL:', 'https://grant-api.onrender.com/api/auth/login');
+      
+      // Make login request with the dedicated client
+      const response = await loginClient.post('/api/auth/login', {
         email: state.loginForm.email.toLowerCase(), // Ensure email is lowercase
         password: state.loginForm.password
       });
+      
+      console.log('Login response received:', response);
       
       const userData = response.data;
       
@@ -569,7 +580,10 @@ export const RegisterGrantProvider = ({ children }) => {
       
       return true;
     } catch (error) {
-      console.error('Login Error:', error.response?.data || error.message);
+      console.error('Login Error:', error);
+      console.error('Login Response Data:', error.response?.data);
+      console.error('Login Request Config:', error.config);
+      
       const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
       
       dispatch({ 

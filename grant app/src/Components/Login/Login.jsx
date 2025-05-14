@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRegisterGrant } from '../../Context/RegisterGrantContext';
+import axios from 'axios';
 import './Login.css';
 
 export const UserLogin = () => {
@@ -10,15 +11,14 @@ export const UserLogin = () => {
     updateLoginForm, 
     validateLoginField, 
     login, 
-    loading, 
-    error 
+    loading,
+    setError
   } = useRegisterGrant();
   
   const { loginForm, loginErrors } = state;
+  const [localLoading, setLocalLoading] = React.useState(false);
+  const [localError, setLocalError] = React.useState(null);
   
-  // New state for debugging
-  const [debugInfo, setDebugInfo] = React.useState(null);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     updateLoginForm({ [name]: value });
@@ -27,42 +27,78 @@ export const UserLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLocalError(null);
     
-    // Clear previous debug info
-    setDebugInfo(null);
+    // Validate fields
+    let isValid = true;
+    const loginFields = ['email', 'password'];
+    
+    loginFields.forEach(field => {
+      const fieldValue = loginForm[field];
+      if (!validateLoginField(field, fieldValue)) {
+        isValid = false;
+      }
+    });
+    
+    if (!isValid) {
+      return false;
+    }
     
     try {
-      // Display what's being submitted (for debugging only - remove in production)
-      setDebugInfo({
-        submitting: true,
-        endpoint: 'https://grant-api.onrender.com/api/auth/login',
-        credentials: {
-          email: loginForm.email,
-          passwordLength: loginForm.password?.length || 0
-        }
-      });
+      setLocalLoading(true);
       
-      const success = await login(e);
+      // Try to use the context login function first
+      console.log('Attempting login via context function');
+      let success = await login(e);
+      
+      // If that fails, try a direct API call as backup
+      if (!success) {
+        console.log('Context login failed, attempting direct API call as fallback');
+        
+        // Create a dedicated axios instance for this request
+        const loginClient = axios.create({
+          baseURL: 'https://grant-api.onrender.com',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: false
+        });
+        
+        // Make the request directly
+        const response = await loginClient.post('/api/auth/login', {
+          email: loginForm.email.toLowerCase(),
+          password: loginForm.password
+        });
+        
+        const userData = response.data;
+        
+        if (userData && userData.token) {
+          // Store user data in localStorage
+          localStorage.setItem('token', userData.token);
+          localStorage.setItem('userData', JSON.stringify({
+            id: userData._id,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
+            role: userData.role
+          }));
+          
+          success = true;
+        }
+      }
+      
       if (success) {
         // Redirect to user dashboard on successful login
         navigate('/dashboard');
-      } else {
-        // Update debug info on failure
-        setDebugInfo(prev => ({
-          ...prev,
-          loginSuccess: false,
-          failureReason: "Login function returned false"
-        }));
       }
     } catch (err) {
-      // Capture error details for debugging
-      setDebugInfo(prev => ({
-        ...prev,
-        loginSuccess: false,
-        error: err.message,
-        stack: err.stack
-      }));
       console.error("Login error:", err);
+      const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setLocalError(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLocalLoading(true);
     }
   };
 
@@ -70,7 +106,9 @@ export const UserLogin = () => {
     <div className="login-container">
       <div className="login-form-container">
         <h2>User Login</h2>
-        {error && <div className="error-message">{error}</div>}
+        {(localError || state.error) && (
+          <div className="error-message">{localError || state.error}</div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
@@ -103,9 +141,9 @@ export const UserLogin = () => {
           <button 
             type="submit" 
             className="submit-button"
-            disabled={loading}
+            disabled={loading || localLoading}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {(loading || localLoading) ? 'Logging in...' : 'Login'}
           </button>
 
           <div className="form-links">
@@ -113,14 +151,6 @@ export const UserLogin = () => {
             <a href="/register" className="register-link">Create an Account</a>
           </div>
         </form>
-        
-        {/* Debug section - remove in production */}
-        {debugInfo && process.env.NODE_ENV !== 'production' && (
-          <div className="debug-info" style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px', fontSize: '12px'}}>
-            <h4>Debug Information</h4>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
       </div>
     </div>
   );
