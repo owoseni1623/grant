@@ -2,14 +2,20 @@ import React, { createContext, useContext, useReducer, useCallback } from 'react
 import axios from 'axios';
 
 // Configure axios for the entire application with dynamic base URL detection
+// Update the getBaseURL function in your RegisterGrantContext.js file
+
 const getBaseURL = () => {
-  // Detect environment and set appropriate API URL
-  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  return isDevelopment 
-    ? 'http://localhost:3000' // Development API
-    : 'https://grant-api.onrender.com'; // Production API
+  // Always use the backend API URL regardless of environment
+  return 'https://grant-api.onrender.com';
+  
+  // Alternative: Use environment detection but with correct URLs
+  // const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  // return isDevelopment 
+  //   ? 'http://localhost:5000' // Your backend development port (adjust if different)
+  //   : 'https://grant-api.onrender.com'; // Production backend API
 };
 
+// Update your axios instance configuration
 const axiosInstance = axios.create({
   baseURL: getBaseURL(),
   withCredentials: true,
@@ -19,7 +25,7 @@ const axiosInstance = axios.create({
   }
 });
 
-// Add request interceptor to include token on each request
+// Add CORS handling interceptor
 axiosInstance.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token');
@@ -29,21 +35,6 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   error => Promise.reject(error)
-);
-
-// Add response interceptor to handle common errors
-axiosInstance.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle specific error cases
-    if (error.response && error.response.status === 401) {
-      // Unauthorized - could trigger logout or refresh token
-      localStorage.removeItem('token');
-      localStorage.removeItem('userData');
-      // Could dispatch logout action here if needed
-    }
-    return Promise.reject(error);
-  }
 );
 
 // Validators

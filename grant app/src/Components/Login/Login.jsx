@@ -15,6 +15,9 @@ export const UserLogin = () => {
   } = useRegisterGrant();
   
   const { loginForm, loginErrors } = state;
+  
+  // New state for debugging
+  const [debugInfo, setDebugInfo] = React.useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,10 +27,42 @@ export const UserLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login(e);
-    if (success) {
-      // Redirect to user dashboard on successful login
-      navigate('/dashboard');
+    
+    // Clear previous debug info
+    setDebugInfo(null);
+    
+    try {
+      // Display what's being submitted (for debugging only - remove in production)
+      setDebugInfo({
+        submitting: true,
+        endpoint: 'https://grant-api.onrender.com/api/auth/login',
+        credentials: {
+          email: loginForm.email,
+          passwordLength: loginForm.password?.length || 0
+        }
+      });
+      
+      const success = await login(e);
+      if (success) {
+        // Redirect to user dashboard on successful login
+        navigate('/dashboard');
+      } else {
+        // Update debug info on failure
+        setDebugInfo(prev => ({
+          ...prev,
+          loginSuccess: false,
+          failureReason: "Login function returned false"
+        }));
+      }
+    } catch (err) {
+      // Capture error details for debugging
+      setDebugInfo(prev => ({
+        ...prev,
+        loginSuccess: false,
+        error: err.message,
+        stack: err.stack
+      }));
+      console.error("Login error:", err);
     }
   };
 
@@ -78,6 +113,14 @@ export const UserLogin = () => {
             <a href="/register" className="register-link">Create an Account</a>
           </div>
         </form>
+        
+        {/* Debug section - remove in production */}
+        {debugInfo && process.env.NODE_ENV !== 'production' && (
+          <div className="debug-info" style={{marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px', fontSize: '12px'}}>
+            <h4>Debug Information</h4>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
